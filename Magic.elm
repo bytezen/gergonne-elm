@@ -3,10 +3,13 @@ module Magic exposing (..)
 import Html exposing (h1, div, Html, text)
 import Html.Events exposing (..)
 
+import Sandbox.DevData as Data
+
 import Dict exposing (Dict)
 import Svg exposing (Svg,svg,rect)
 import Svg.Attributes exposing (width,height,fill,x,y)
 import Card
+import Board
 --import Screen
 
 -- UPDATE
@@ -55,10 +58,13 @@ viewScreen screen =
                 [ text config.title ]
             , div [onClick (ChangeScreen next)]
                 [ text config.body ]
-            , viewSvgTest
+            --, viewSvgTest
+            , svg [ width "600", height "600"] [viewBoard]
             ]
 
 
+viewBoard : Svg msg
+viewBoard = Board.view Data.deck
 
 viewSvgTest : Svg msg
 viewSvgTest = 
