@@ -8,6 +8,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Animation exposing (px)
 import Color exposing (purple, green, rgb)
+import List.Extra as L 
 
 
 type alias Model =
@@ -56,6 +57,9 @@ offscreen =
             , ( 0.0, cardHeight)
             ]
 
+
+-- Utils
+
 gridPos : Int -> (Int,Int)
 gridPos i =
     let
@@ -64,6 +68,12 @@ gridPos i =
     in
     (yoff i,xoff i)
 
+
+rowsOf3 = L.groupsOf 3
+columns = L.transpose
+column1 = columns >> List.head >> (Maybe.withDefault [])
+column2 = columns >> List.drop 1 >> List.head >> (Maybe.withDefault [])
+column3 = columns >> L.last >> (Maybe.withDefault [])
 
 
 cards : List (List Animation.Property)
