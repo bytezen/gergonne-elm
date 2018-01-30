@@ -76,6 +76,30 @@ column2 = columns >> List.drop 1 >> List.head >> (Maybe.withDefault [])
 column3 = columns >> L.last >> (Maybe.withDefault [])
 
 
+-- choosing columns
+
+-- given a sort target, selected column, and list of unsorted numbers
+-- return the resulting list after the cards are "picked up"
+--gergonneSortOn : Int -> GergonneColumn -> List Int -> List Int
+gergonneSortOn target col vals =
+        []
+
+
+
+            
+
+
+{- Example
+
+deck = List.range 1 27 -- make this random
+deal = rowsOf3 deck
+(top, mid, bot ) = (column1 deal, column2 deal, column3 deal)
+newdeck = List.concat [top, mid, bot]
+newdeal = rowsOf3 newdeck
+
+-}
+
+
 cards : List (List Animation.Property)
 cards =
     let

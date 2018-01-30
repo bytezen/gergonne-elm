@@ -41,15 +41,18 @@ palette =
 
 offscreen : Animation.Property
 offscreen = 
-    let
-        cardWidth = 80
-        cardHeight = 120
-    in
+    --let
+    --    cardWidth = 80
+    --    cardHeight = 120
+    --in
         Animation.points 
             [ ( 0.0, 0.0 )
-            , ( 0.0, cardWidth )
-            , ( cardWidth, cardHeight )
-            , ( 0.0, cardHeight)
+            , ( 0.0, 80 )
+            --, ( 0.0, cardWidth )
+            --, ( cardWidth, cardHeight )
+            , ( 80, 120 )
+            , ( 0.0, 120)
+            --, ( 0.0, cardHeight)
             ]
 
 polygons : List (List Animation.Property)
@@ -121,7 +124,7 @@ update action model =
                             (\i style newStyle ->
                                 Animation.interrupt
                                     [ Animation.wait (toFloat i * 0.05 * second)
-                                    , Animation.to newStyle --[offscreen] 
+                                    , Animation.to [offscreen] -- newStyle --[offscreen] 
                                     ]
                                     style
                             )

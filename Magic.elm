@@ -10,6 +10,8 @@ import Svg exposing (Svg,svg,rect)
 import Svg.Attributes exposing (width,height,fill,x,y)
 import Card
 import Board
+import UI exposing (Screen)
+
 --import Screen
 
 -- UPDATE
@@ -21,6 +23,8 @@ update action model =
             ({ model | screen = screen }
             , Cmd.none
             )
+        UI ->
+            (model, Cmd.none)
 
 
 -- MODEL
@@ -31,7 +35,7 @@ type alias Model =
 
 init : (Model, Cmd Msg) 
 init = ({
-        screen = welcomeScreen
+        screen = UI.welcomeScreen
        }
        , Cmd.none
        )
@@ -40,27 +44,30 @@ init = ({
 -- VIEW
 view : Model -> Html Msg
 view model =
-    viewScreen model.screen
+    Html.map 
+        (\_ -> UI )
+        (UI.view model.screen)
+    --viewScreen model.screen
 
 
-viewScreen : Screen -> Html Msg
-viewScreen screen =
-    let
-        config = screenConfig screen 
+--viewScreen : Screen -> Html Msg
+--viewScreen screen =
+--    let
+--        config = screenConfig screen 
 
-        next = Dict.get config.id uimodel
-                |> Maybe.withDefault screen
-    in
-        div []
-            [
-              h1 
-                [] 
-                [ text config.title ]
-            , div [onClick (ChangeScreen next)]
-                [ text config.body ]
-            --, viewSvgTest
-            , svg [ width "600", height "600"] [viewBoard]
-            ]
+--        next = Dict.get config.id uimodel
+--                |> Maybe.withDefault screen
+--    in
+--        div []
+--            [
+--              h1 
+--                [] 
+--                [ text config.title ]
+--            , div [onClick (ChangeScreen next)]
+--                [ text config.body ]
+--            --, viewSvgTest
+--            , svg [ width "600", height "600"] [viewBoard]
+--            ]
 
 
 viewBoard : Svg msg
@@ -75,67 +82,68 @@ viewSvgTest =
         ]
 -- MSG
 type Msg = ChangeScreen Screen
+         | UI
 
 
 -- TYPE SCREEN
 
-type alias ScreenConfig =
-    { id: String
-    , title: String 
-    , body: String
-    }
+--type alias ScreenConfig =
+--    { id: String
+--    , title: String 
+--    , body: String
+--    }
 
-type Screen = Welcome ScreenConfig 
-            | Instructions ScreenConfig
-            | Pick ScreenConfig
-            | SelectColumn ScreenConfig
+--type Screen = Welcome ScreenConfig 
+--            | Instructions ScreenConfig
+--            | Pick ScreenConfig
+--            | SelectColumn ScreenConfig
 
-type alias UIModel = Dict String Screen
+--type alias UIModel = Dict String Screen
 
-welcomeScreen = Welcome { title = "Prepare to have your circuits blown..."
-                        , body = "lorum ipsum blaga da bloop stoop droop noope"
-                        , id = "welcome"
-                        }
+--welcomeScreen = Welcome { title = "Prepare to have your circuits blown..."
+--                        , body = "lorum ipsum blaga da bloop stoop droop noope"
+--                        , id = "welcome"
+--                        }
 
-instructionScreen = Instructions 
-                        { title = "How this works"
-                        , body = "lorum ipsum blaga da bloop stoop droop noope"
-                        , id = "instruction"
-                        }
+--instructionScreen = Instructions 
+--                        { title = "How this works"
+--                        , body = "lorum ipsum blaga da bloop stoop droop noope"
+--                        , id = "instruction"
+--                        }
                          
-pickScreen = Pick 
-                { title = "Prepare to have your circuits blown..."
-                , body = "lorum ipsum blaga da bloop stoop droop noope"
-                , id = "pick"
-                }
+--pickScreen = Pick 
+--                { title = "Prepare to have your circuits blown..."
+--                , body = "lorum ipsum blaga da bloop stoop droop noope"
+--                , id = "pick"
+--                }
                          
-selectColumn = SelectColumn 
-                    { title = "Prepare to have your circuits blown..."
-                         , body = "lorum ipsum blaga da bloop stoop droop noope"
-                         , id = "selectColumn"
-                     }
+--selectColumn = SelectColumn 
+--                    { title = "Prepare to have your circuits blown..."
+--                         , body = "lorum ipsum blaga da bloop stoop droop noope"
+--                         , id = "selectColumn"
+--                     }
 
-uimodel : UIModel
-uimodel = Dict.fromList
-                [ ( "welcome" , instructionScreen )
-                ]
+--uimodel : UIModel
+--uimodel = Dict.fromList
+--                [ ( "welcome" , instructionScreen )
+--                ]
 
 
-screenConfig : Screen -> ScreenConfig
-screenConfig screen = 
-                case screen of 
-                    Welcome config -> config
-                    Instructions config -> config
-                    Pick config -> config
-                    SelectColumn config -> config
+--screenConfig : Screen -> ScreenConfig
+--screenConfig screen = 
+--                case screen of 
+--                    Welcome config -> config
+--                    Instructions config -> config
+--                    Pick config -> config
+--                    SelectColumn config -> config
 
-nextScreen : Screen -> Screen
-nextScreen screen =
-    let
-        id = .id <| screenConfig screen
-    in
-        Dict.get id uimodel
-            |> Maybe.withDefault screen
+--nextScreen : Screen -> Screen
+--nextScreen screen =
+--    let
+--        id = .id <| screenConfig screen
+--    in
+--        Dict.get id uimodel
+--            |> Maybe.withDefault screen
 
 
 
