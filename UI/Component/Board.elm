@@ -1,49 +1,16 @@
 module UI.Component.Board exposing (..)
 
-import Svg exposing (Svg,Attribute,g,rect,svg)
-import Svg.Attributes exposing (..)
-import Svg.Events exposing (onClick)
+import Sandbox.DevData exposing (deck)
+
+import UI.Component.Card as Card
+
+import Svg exposing (Svg,g,rect)
+import Svg.Attributes exposing (id,transform,height,width,style,x,y,fill)
+import List.Extra exposing (groupsOf)
+import State exposing (State)
 
 
-
-type Dimensions = Dimensions Int Int
-
-type alias Model = 
-    {
-      --cards : List Int
-    --, 
-    dimension : Dimensions 
-    }
-
-foo : Model -> Bool
-foo {dimension} = 
-    case dimension of
-        (Dimensions w h) ->
-            False
-
---view : Model -> msg  -> Svg msg
---view model msg =
-view msg =
-    svg
-        [ version "1.1"
-        , x "0"
-        , y "0"
-        , viewBox "0 0 323.141 322.95"
-        ]
-      <|
-        [ rect
-            [ fill "#7FD13B"
-            , x "192.99"
-            , y "107.392"
-            , width "107.676"
-            , height "108.167"
-            , transform "matrix(0.7071 0.7071 -0.7071 0.7071 186.4727 -127.2386)"
-            , onClick msg
-            ]
-            []
-        ]
-
-{-
+--view : List (Card.Card) -> Svg msg
 view cards = 
     let
         -- 3 is the base number; add this to the model for the
@@ -76,5 +43,37 @@ renderRow i cards =
         <| List.indexedMap 
                 viewRow 
                 cards 
+             
+    {-
+    g
+     []
+     [ 
+     rect 
+        [width "50", height "50", x "10" , y "10", fill "red"] 
+        []
+     ]
+     -}
 
--}
+
+-- State is the offset to apply to the row
+-- Value is the row to transform
+offset = 10
+boardWidth = 500
+rowVOffset = 50
+rowHOffset = 200
+
+layout =
+   State.run 0 <|  
+    State.map 
+        ((+) offset)
+        <| (State.advance 
+                <| (\int -> (100,100)
+                    )
+           )  
+ 
+layoutAll =
+    State.traverse
+        (\off -> State.advance (\_ -> ("foo" ++ (toString off), off + offset)))
+        (List.range 1 10)
+
+bump = State.modify ((+) offset)

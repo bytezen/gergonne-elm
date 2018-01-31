@@ -1,4 +1,4 @@
-module Card exposing (..)
+module UI.Component.Card exposing (..)
 
 import Svg exposing (Svg, g, text, rect)
 import Svg.Attributes exposing (x,y,width,height,stroke,fill,rx,ry,style)
@@ -17,13 +17,16 @@ type alias Palette =
         }
 
 
+type alias Model = Card
+
+
 card : Rank -> Val -> Card
 card r v = Card r v        
 
 rank : a -> Rank
 rank _ = Rank
 
-value : Card -> Val
+value : Model -> Val
 value (Card _ v ) = v
 
 palette : Palette 
