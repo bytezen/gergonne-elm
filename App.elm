@@ -4,6 +4,7 @@ import Html exposing (h1, div, Html)
 import Html.Attributes as Attr
 
 import UI.UI as UI 
+import Animation
 
 type Msg = 
     UIMsg UI.Msg
@@ -12,6 +13,7 @@ type Msg =
 type alias Model = 
    { ui : UI.Model
    , clickCount : Int
+   , styles : List Animation.State
    }
 
 
@@ -20,6 +22,7 @@ init =
     ( { 
        ui = UI.init
        ,clickCount = 0
+       , styles = []
       }
       , Cmd.none
     )
@@ -36,6 +39,8 @@ update msg model =
                 {model | ui = newuimodel}
                 !
                 [Cmd.map UIMsg cmd]
+
+
         _ -> 
             (model, Cmd.none)
 
@@ -46,7 +51,11 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model = Sub.none
+subscriptions model = 
+    Animation.subscription 
+        (UIMsg << UI.Animate)
+        [Animation.style model.ui.styles]
+    --UI.subscription model.ui--Sub.none
 
 main : Program Never Model Msg
 main =

@@ -4,18 +4,23 @@ import UI.SortPlace as SortPlace
 import Html exposing (Html,div,text)
 import Html.Events exposing (onClick)
 
+import Animation
+import Color
+
 
 type alias Column = Int
 
 type Msg = 
      SortPlaceMsg SortPlace.InternalMsg
     | Select Column
+    | Animate Animation.Msg
 
 
 type alias Model = 
     {
     sortPlace : SortPlace.Model
     , count : Int
+    , styles : List (Animation.Property)
     --selectedColumns : Maybe (List Int)
     }
 
@@ -41,8 +46,42 @@ update msg model =
                 ! [ Cmd.map sortPlaceTranslator cmd ]
                     
         Select c ->
-            ({model | count = c}, Cmd.none)
+            let 
+                newstyles = List.map (\s -> Animation.interrupt 
+                                [Animation.to 
+                                    [Animation.custom "rx" 50 "px"] -- Color.green]
+                                ]
+                                s
+                                )
+                                model.sortPlace.styles
+                spmodel = model.sortPlace
+                newSortPlaceModel = { spmodel | styles = newstyles }
+            in
+            --({model | count = c}, Cmd.none)
+            ({ model | count = c
+             , sortPlace = newSortPlaceModel
+             }
+             , Cmd.none)
 
+        Animate time ->
+            let
+                spmodel = model.sortPlace
+                updateStyles = List.map (Animation.update time) spmodel.styles
+                newSortPlaceModel = { spmodel | styles = updateStyles}
+            in
+                    
+            ({ model | sortPlace = newSortPlaceModel }, Cmd.none )
+            --(model, Cmd.none)
+        --Animate time ->
+        --    ( { model
+        --        | styles = List.map (Animation.update time) model.styles
+        --      }
+        --    , Cmd.none
+        --    )
+
+subscription : Model -> Sub msg
+subscription model =
+    Sub.none
 
 --handleChildComponentMsg : ChildrenMsg -> Model -> (Model, Cmd Msg)
 --handleChildComponentMsg msg model =
@@ -79,4 +118,5 @@ init =
     {
      sortPlace = SortPlace.init
     ,count = 0
+    ,styles = []
     }
