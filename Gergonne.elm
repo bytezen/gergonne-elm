@@ -181,13 +181,13 @@ deckStyle =
                     toFloat 
                     <| List.range 1 27 
                 )
-
+{-
 layoutStyle : List (List Animation.Property)
 layoutStyle =
     let
          = 
     in
-            
+-}            
 
 --[Animation.translate (px 0) (px 0)]
 
@@ -268,7 +268,7 @@ cardView (Card.Card _ value) style =
             (Animation.render style)
     in
         Svg.g 
-            attributes
+            (attributes ++ [Svg.Events.onClick Pickup])
             --((Animation.render cardstyle) 
             --  ++ 
             --  [
