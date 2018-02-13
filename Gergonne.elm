@@ -22,7 +22,7 @@ type Msg =
 
 type alias Model = 
    { 
-     cards : List Card.Card
+     deck : List Card.Card
    , styles : List Animation.State
    , hovering : Bool
    }
@@ -31,9 +31,12 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     {
-     cards = deck
+     deck = deck
     --,styles = List.map (\props -> Animation.style props) cards
-    ,styles = List.map (\props -> Animation.style props) [[Animation.translate (px 0) (px 0)]]
+    ,styles = List.map 
+                    (\props -> Animation.style props) 
+                    deckStyle    
+    --,styles = List.map (\props -> Animation.style props) [[Animation.translate (px 0) (px 0)]]
     ,hovering = False
     }
     ! [Cmd.none]
@@ -113,81 +116,11 @@ view model =
         , y "0"
         , viewBox "0 0 400 400"
         ]    
-        --<| List.map (\s -> List.map cardSvg s) model.styles
-        (List.map ( \cardstyle -> 
-                        Svg.g 
-                            ((Animation.render cardstyle) 
-                              ++ 
-                              [
-                                --Svg.Events.onMouseOver (Msg "hovering")
-                              --, Svg.Events.onMouseOut (Msg "leaving")
-                              Svg.Events.onClick Pickup
-                              ]
-                            )
-
-                            [ rect cardBg []
-                            , Svg.text_ cardLabel [Svg.text "8"]
-                            ]
-                    ) 
-                    model.styles
-        )
-        --[Svg.g 
-        --    ([
-        --    --Svg.Attributes.transform "translate(100,0)"
-        --    Svg.Events.onMouseOver (Msg "hovering")
-        --    ,Svg.Events.onMouseOut (Msg "leaving")
-        --    --,Svg.Events.onClick (PickupAll)
-        --    ]
-        --    ++
-        --    (Animation.render
-        --    <| Animation.style [Animation.translate (px 100) (px 0) ]
-        --    )
-        --    )
-        --    [rect cardBg []
-        --    ,Svg.text_ cardLabel [Svg.text "8"] 
-        --    ]
-        --]
-
-
-        --    rect
-        --        [width "80"
-        --        ,height "120"
-        --        ,x "0"
-        --        ,Svg.Attributes.rx "10"
-        --        , fill fillColor --"red"
-        --        ]
-        --        []
-        --    ,Svg.text_ 
-        --        ([
-        --        --fill "yellow"
-        --         x "50"
-        --        ,y "20"
-        --        ]
-        --        ++
-        --        (Animation.render 
-        --        <| Animation.style  [Animation.fill Color.yellow]
-        --        )
-
-        --        )
-        --        [ Svg.text "8"]
-        --    ]
-        --]
-
-        --[rect 
-        --    [width "200", height "200", fill "red"]
-        --    []
-        --]
-
-        --(List.map 
-        --    (\cardstyle -> 
-        --        rect (Animation.render cardstyle) []
-        --    ) 
+        <| List.map2
+                cardView model.deck model.styles
+        --<| List.map 
+        --    (cardView (Card.Card (Card.rank "foo") 10))
         --    model.styles
-        --)
-
-
-    --div [][]
-    --Html.map UIMsg (UI.view model.ui)
 
 
 subscriptions : Model -> Sub Msg
@@ -227,6 +160,36 @@ deck =
                     Card.Card (Card.rank "diamonds") i 
         )
         (List.range 1 27)
+
+deckStyle : List (List Animation.Property)
+deckStyle =
+    let
+        offset = 5
+        take = 3
+        yoffset = 10
+        transProperty x y = 
+            Animation.translate (px x) (px y)
+    in
+        List.map 
+            (\i ->
+                --if i < take then
+                    [transProperty (i * offset) yoffset]
+                --else
+                    --[transProperty (take * offset) yoffset] 
+            ) 
+            <| (List.map 
+                    toFloat 
+                    <| List.range 1 27 
+                )
+
+layoutStyle : List (List Animation.Property)
+layoutStyle =
+    let
+         = 
+    in
+            
+
+--[Animation.translate (px 0) (px 0)]
 
 layoutCards : List Card.Card -> List (List Animation.Property)
 layoutCards cards =
@@ -269,20 +232,60 @@ layoutCards cards =
             in
                 offsetAttr
     in 
-        --[
-        --[ Animation.x 10
-        --    , Animation.y 40
-        --    , Animation.width (px 80)
-        --    , Animation.height (px 80)
-        --    , Animation.fill Color.orange
-        --    , Animation.stroke Color.black
-        --    , Animation.custom "rx" 10 "px"
-        --    , Animation.custom "ry" 10 "px"
-        --    ]
-        --]
-        List.map 
+       List.map 
             ((++) attr )
             <| List.concatMap offset rows
+
+cardView : Card.Card -> Animation.State -> Html Msg  
+cardView (Card.Card _ value) style =
+    let
+        ar = 2.5/3.5
+        cardWidth = 80.0
+        cardHeight = cardWidth / ar
+        bgProps = 
+            [
+              width <| toString cardWidth
+            , height <| toString cardHeight
+            , fill "orange"
+            , stroke "black"
+            , strokeWidth "2"
+            , rx "10"
+            , ry "10"
+            ]
+
+        labelProps =
+            [
+              stroke "black"
+            , fill "black"
+            , strokeWidth "1"
+            , x <| toString (cardWidth * 0.8)
+            , y <| toString (cardHeight * 0.2)
+            ]
+
+        attributes = 
+            --[Svg.Events.onClick Pickup]
+            --++
+            (Animation.render style)
+    in
+        Svg.g 
+            attributes
+            --((Animation.render cardstyle) 
+            --  ++ 
+            --  [
+            --    --Svg.Events.onMouseOver (Msg "hovering")
+            --  --, Svg.Events.onMouseOut (Msg "leaving")
+            --  Svg.Events.onClick Pickup
+            --  ]
+            --)
+
+            [ rect 
+                bgProps 
+                []
+            , Svg.text_ 
+                labelProps 
+                [Svg.text (toString value)]
+            ]
+        
 
 cardBg : List (Svg.Attribute msg)
 cardBg =
