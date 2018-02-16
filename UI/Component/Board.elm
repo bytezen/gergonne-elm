@@ -2,78 +2,105 @@ module UI.Component.Board exposing (..)
 
 import Sandbox.DevData exposing (deck)
 
-import UI.Component.Card as Card
+import Svg exposing (Svg,Attribute,g,rect,svg)
+import Svg.Attributes exposing (..)
+import Svg.Events exposing (onClick)
+import Animation
+import Color 
 
-import Svg exposing (Svg,g,rect)
-import Svg.Attributes exposing (id,transform,height,width,style,x,y,fill)
-import List.Extra exposing (groupsOf)
-import State exposing (State)
 
 
 --view : List (Card.Card) -> Svg msg
-view cards = 
-    let
-        -- 3 is the base number; add this to the model for the
-        -- general trick
-        rows = groupsOf 3 cards
-        cWidth = boardWidth / 3.0 
-            
-    in
-        g
-        [id "board"]
-        <| 
-        List.indexedMap renderRow rows 
+type alias Model = 
+    {
+      cards : List Card.Card
+    , styles : List Animation.State --List Animation.Property
+    , dimension : Dimensions 
+    }
 
---renderRow : Int -> List (List Card.Card) -> Svg msg
-renderRow i cards =
-   let
-        translate x y = "translate (" 
-                        ++ (toString x) 
-                        ++ ","
-                        ++ (toString y) 
-                        ++ ")"
+init : Model
+init = 
+    {
+    styles = 
+        List.map Animation.style 
+            [
+                [
+                  Animation.fill Color.red
+                --, Animation.translate pos2x pos2y
+                , Animation.x 192.99
+                , Animation.y 107.392
+                , Animation.width <| Animation.px 107.676
+                , Animation.height <| Animation.px 108.167
+                ]
+            ]
+    , 
+    dimension = Dimensions 325 325
+    , cards = [dummyCard]
+    }
 
-        viewRow j c =
-            g 
-                [transform (translate (j * rowHOffset) 0 )]
-                [Card.view c]
-   in
-        g
-        [transform (translate 0 (i * rowVOffset) )]
-        <| List.indexedMap 
-                viewRow 
-                cards 
-             
-    {-
-    g
-     []
-     [ 
-     rect 
-        [width "50", height "50", x "10" , y "10", fill "red"] 
-        []
-     ]
-     -}
+foo : Model -> Bool
+foo {dimension} = 
+    case dimension of
+        (Dimensions w h) ->
+            False
+
+dummyCard : Card.Card
+dummyCard = Card.Card (Card.rank "diamonds") 10
+
+defaultSize : Dimensions
+defaultSize = Dimensions 600 400
+--view : Model -> msg  -> Svg msg
+--view model msg =
+view : Model -> msg -> Svg msg
+view {styles, cards} msg =
+    svg
+        [ version "1.1"
+        , x "0"
+        , y "0"
+        , viewBox "0 0 323.141 322.95"
+        ]
+      <|
+        showDealt styles cards
+        --[ rect 
+        --    (Animation.render model.styles)
+        --    []
+        --]
+
+        --[ rect
+        --    ([ fill "#7FD13B"
+        --    , x "192.99"
+        --    , y "107.392"
+        --    , width "107.676"
+        --    , height "108.167"
+        --    --, transform "matrix(0.7071 0.7071 -0.7071 0.7071 186.4727 -127.2386)"
+        --    --, transform "matrix(0.7071 0.7071 -0.7071 0.7071 86.4727 -127.2386)"
+        --    , onClick msg
+        --    ] -- ++ (Animation.render model.styles)
+        --    )
+        --    []
+        --]
+
+showDealt : List Animation.State -> List Card.Card -> List (Svg msg)
+showDealt styles cards =
+      List.map 
+      --(\c -> Card.view {card = c, styleProps = Card.initStyle}) 
+      (\c -> 
+        Card.view { card = c
+                  --, styleProps = Card.initStyle
+                  , styleProps = styles
+                  }
+      ) 
+      cards
 
 
--- State is the offset to apply to the row
--- Value is the row to transform
-offset = 10
-boardWidth = 500
-rowVOffset = 50
-rowHOffset = 200
+position1 = "matrix(0.7071 0.7071 -0.7071 0.7071 86.4727 -127.2386)"
+angle1 = Animation.deg 45
+angle2 = Animation.deg 90
+pos1x = Animation.px 0 --86
+pos1y = Animation.px 0 --127
+pos2x = Animation.px 186
+pos2y = Animation.px -127
+position2 = "matrix(0.7071 0.7071 -0.7071 0.7071 186.4727 -127.2386)"
 
-layout =
-   State.run 0 <|  
-    State.map 
-        ((+) offset)
-        <| (State.advance 
-                <| (\int -> (100,100)
-                    )
-           )  
- 
-layoutAll =
-    State.traverse
-        (\off -> State.advance (\_ -> ("foo" ++ (toString off), off + offset)))
-        (List.range 1 10)
-
-bump = State.modify ((+) offset)
+style1 : Animation.Property
+style1 = Animation.translate pos1x pos1y

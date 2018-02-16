@@ -3,8 +3,9 @@ module UI.SortPlace exposing (..)
 import Html exposing (Html, div, text, h1)
 import Html.Attributes
 import Html.Events exposing (onClick)
-
+import Animation
 import UI.Component.Board as Board
+import UI.Component.Card as Card
 
 
 type PlaceValue = 
@@ -27,7 +28,10 @@ type Msg =
 
 
 type alias Model = 
-    PlaceValue 
+    {
+      styles : List Animation.State 
+    , cards : List Card.Card  
+    }
 
 
 type alias TranslationDictionary msg =
@@ -51,31 +55,42 @@ translator { onInternalMsg, onColumnSelect } msg =
 
 
 view : Model -> Html Msg
-view model =
+view {cards,styles} =
     let
-        currentPlace = Units --model.currentPlace
-        placeValue =
-            case model of
-                Units -> "Units"
-                Threes -> "Threes"
-                Nines -> "Nines"
+        --currentPlace = Units --model.currentPlace
+        --placeValue =
+        --    case model of
+        --        Units -> "Units"
+        --        Threes -> "Threes"
+        --        Nines -> "Nines"
+        placeValue = "dummytesting"
+        (Card.Card _ v) = case cards of
+                       c::cs -> c
+                       [] -> Card.Card (Card.rank "bad") 0
     in
             
     div []
         [ h1 
-            --[onClick (ForParent (column1selected currentPlace))] 
-            [onClick <| ForMe Hovering ] 
-            [text ("Select column ..." ++ placeValue )
+            [onClick (ForParent (column1selected Nines))] 
+            --[onClick <| ForMe Hovering ] 
+            [text ("Select column ..." ++ (toString v)) --placeValue )
             ]
-        , Board.view (ForMe Hovering)
+        --, Board.view Board.init (ForMe Hovering)
+        , Board.view 
+            {cards = cards
+            , styles = styles
+            , dimension = Board.defaultSize
+            } 
+            (ForMe Hovering)
         ]
 
+    
 
 update : InternalMsg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Hovering ->
-        (Nines , Cmd.none)
+        (model , Cmd.none)
     --(model, Cmd.none)
 
 
@@ -85,4 +100,7 @@ column1selected =
 
 
 init : Model
-init = Units 
+init = 
+    { cards = [Card.Card (Card.rank "diamonds") 8]
+    , styles = List.map Animation.style [Card.cardStyle]
+    }

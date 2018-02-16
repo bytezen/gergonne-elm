@@ -1,6 +1,6 @@
 module Sandbox.DevData exposing (..)
 
-import Card
+import UI.Component.Card as Card
 
 
 foo = Card.rank "foo"
