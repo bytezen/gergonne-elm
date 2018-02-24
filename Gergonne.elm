@@ -12,10 +12,15 @@ import List.Extra exposing (groupsOf, transpose, last)
 import UI.Component.Card as Card
 
 
+type alias CardColumn = Int
+
+type HoverState = Over CardColumn
 
 type Msg = 
     Msg String
     | Pickup
+    | Hovering HoverState
+    | UnHover
     | Animate Animation.Msg
 
 
@@ -24,7 +29,7 @@ type alias Model =
    { 
      deck : List Card.Card
    , styles : List Animation.State
-   , hovering : Bool
+   , hovering : Maybe HoverState
    }
 
 
@@ -32,12 +37,21 @@ init : ( Model, Cmd Msg )
 init =
     {
      deck = deck
-    --,styles = List.map (\props -> Animation.style props) cards
+    --,styles = List.map 
+    --                (\props -> Animation.style props) 
+    --                deckStyle    
+
+    --,styles = List.map 
+    --                (\props -> Animation.style props) 
+    --                cardDealtStyle
+
     ,styles = List.map 
-                    (\props -> Animation.style props) 
-                    deckStyle    
-    --,styles = List.map (\props -> Animation.style props) [[Animation.translate (px 0) (px 0)]]
-    ,hovering = False
+                    --(\props -> Animation.style props) 
+                    Animation.style 
+                    columnAnimationStyle
+
+
+    ,hovering = Nothing
     }
     ! [Cmd.none]
 
@@ -46,7 +60,7 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Msg "hovering" ->
-            {model | hovering = True} ! [Cmd.none]
+            {model | hovering = Nothing} ! [Cmd.none]
 
         Pickup ->
             {model | styles =
@@ -71,8 +85,23 @@ update msg model =
             , Cmd.none
             )
 
+        Hovering (Over x) ->
+            ( { model 
+                | hovering = Just <| Over x
+              }
+            , Cmd.none
+            )
+
+        UnHover ->
+            ( { model 
+                | hovering = Nothing
+              }
+            , Cmd.none
+            )
+
+
         _ ->
-            {model | hovering = False} ! [Cmd.none]
+            {model | hovering = Nothing} ! [Cmd.none]
     --case msg of
     --    UIMsg uimsg ->
     --        let
@@ -92,7 +121,7 @@ view : Model -> Html Msg
 view model =
     let 
         fillColor = case model.hovering of
-                        True -> "blue"
+                        Just (Over x) -> "blue"
                         _ -> "red"
         --cardSvg style =
         --    [Svg.g 
@@ -116,11 +145,10 @@ view model =
         , y "0"
         , viewBox "0 0 400 400"
         ]    
-        <| List.map2
-                cardView model.deck model.styles
-        --<| List.map 
-        --    (cardView (Card.Card (Card.rank "foo") 10))
-        --    model.styles
+        --<| List.map2
+                --sortedCardView model.deck model.styles
+        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model.deck model.styles]]
+        [Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]
 
 
 subscriptions : Model -> Sub Msg
@@ -181,13 +209,51 @@ deckStyle =
                     toFloat 
                     <| List.range 1 27 
                 )
-{-
-layoutStyle : List (List Animation.Property)
-layoutStyle =
+
+
+
+cardDealtStyle : List (List Animation.Property)
+cardDealtStyle =
     let
-         = 
+        (rowOffset, colOffset) = (20,90)
+
+        positions = List.map 
+                        (\(x,y) -> 
+                            (toFloat x, toFloat y) 
+                        )
+                        (List.map gridPos <| List.range 0 26 )
+
     in
--}            
+        List.map 
+            (\(x,y) ->
+                [Animation.translate 
+                    (px (colOffset * x)) 
+                    (px (rowOffset * y))
+                ]
+            )
+            positions
+            
+
+columnAnimationStyle : List (List Animation.Property)
+columnAnimationStyle =
+        let
+        (rowOffset, colOffset) = (20,90)
+
+        positions = List.map 
+                        (\(x,y) -> 
+                            (toFloat x, toFloat y) 
+                        )
+                        (List.map gridPos <| List.range 0 26 )
+
+    in
+        List.map 
+            (\(x,y) ->
+                [Animation.translate 
+                    (px 0)
+                    (px (rowOffset * y))
+                ]
+            )
+            positions
 
 --[Animation.translate (px 0) (px 0)]
 
@@ -236,8 +302,8 @@ layoutCards cards =
             ((++) attr )
             <| List.concatMap offset rows
 
-cardView : Card.Card -> Animation.State -> Html Msg  
-cardView (Card.Card _ value) style =
+sortedCardView : Card.Card -> Animation.State -> Html Msg  
+sortedCardView (Card.Card _ value) style =
     let
         ar = 2.5/3.5
         cardWidth = 80.0
@@ -286,6 +352,125 @@ cardView (Card.Card _ value) style =
                 [Svg.text (toString value)]
             ]
         
+--dealtCardView : List Card.Card -> List (Animation.State) -> Svg.Svg Msg -- Html Msg
+--dealtCardView cards styles =
+dealtCardView : Model -> Svg.Svg Msg -- Html Msg
+dealtCardView {deck,styles,hovering} = 
+    let
+        ar = 2.5/3.5
+        cardWidth = 80.0
+        cardHeight = cardWidth / ar
+
+        (col1,col1style,bg1) =  (column1 deck, column1 styles, highlightStyle 1)  
+        (col2,col2style,bg2) =  (column2 deck, column2 styles, highlightStyle 2)  
+        (col3,col3style,bg3) =  (column3 deck, column3 styles, highlightStyle 3)  
+
+        highlightStyle columnNum = 
+            case hovering of
+                Just (Over x) ->
+                    if x == columnNum then
+                        highlight
+                    else
+                        rect [] []
+                _ ->
+                    rect [] []
+
+        bgProps = 
+            [
+              width <| toString cardWidth
+            , height <| toString cardHeight
+            , fill "orange"
+            , stroke "black"
+            , strokeWidth "2"
+            , rx "10"
+            , ry "10"
+            ]
+
+        labelProps =
+            [
+              stroke "black"
+            , fill "black"
+            , strokeWidth "1"
+            , x <| toString (cardWidth * 0.8)
+            , y <| toString (cardHeight * 0.2)
+            ]
+
+        cardElem (Card.Card rank value) style = 
+            Svg.g
+                (Animation.render style)
+                [rect bgProps []
+                ,Svg.text_ labelProps [Svg.text (toString value)]
+                ]
+
+        highlight = rect [width "90", height "300", stroke "blue", fill "red"] []
+
+
+            
+    in
+        Svg.g 
+            []
+            [        
+              Svg.g
+                [transform "translate(0,0)"
+                ,(Svg.Events.onMouseOver <| Hovering (Over 1))
+                ,(Svg.Events.onMouseOut UnHover)]
+                --(List.map2 cardElem cards styles)
+                <| [bg1]
+                    ++
+                    (List.map2 cardElem col1 col1style)
+                
+            , Svg.g
+                [transform "translate(100,0)"]
+                --(List.map2 cardElem cards styles)
+                (List.map2 cardElem col2 col2style)
+            , Svg.g
+                [transform "translate(200,0)"]
+                --(List.map2 cardElem cards styles)
+                (List.map2 cardElem col3 col3style)
+            ]
+
+           
+
+deckView : List Card.Card -> List (Animation.State) -> Svg.Svg Msg
+deckView cards styles =
+    let
+        ar = 2.5/3.5
+        cardWidth = 80.0
+        cardHeight = cardWidth / ar
+        bgProps = 
+            [
+              width <| toString cardWidth
+            , height <| toString cardHeight
+            , fill "orange"
+            , stroke "black"
+            , strokeWidth "2"
+            , rx "10"
+            , ry "10"
+            ]
+
+        labelProps =
+            [
+              stroke "black"
+            , fill "black"
+            , strokeWidth "1"
+            , x <| toString (cardWidth * 0.8)
+            , y <| toString (cardHeight * 0.2)
+            ]
+
+        cardElem (Card.Card rank value) style = 
+            Svg.g
+                (Animation.render style)
+                [rect bgProps []
+                ,Svg.text_ labelProps [Svg.text (toString value)]
+                ]
+
+            
+    in
+        Svg.g
+            []
+            (List.map2 cardElem cards styles)    
+
+
 
 cardBg : List (Svg.Attribute msg)
 cardBg =
