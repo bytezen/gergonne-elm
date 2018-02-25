@@ -154,18 +154,21 @@ update msg model =
                --newStyles = pickupAnimationStyles model.styles
                newStyles = createStyle deckStyle
                animatedStyles = 
-                    List.map3
-                        (\i style newStyle ->
+                    List.map4
+                        (\i currentStyle intermediateAnimation finalAnimation ->
                             Animation.interrupt
                                 [
                                  Animation.wait (toFloat i * 0.05 * Time.second)
-                                ,Animation.to newStyle
+                                ,Animation.to intermediateAnimation
+                                ,Animation.wait (1 * Time.second)
+                                ,Animation.to finalAnimation
                                 ]
-                                style 
+                                currentStyle 
                         )
                         (List.range 0 (List.length model.styles))
                         model.styles
                         deckStyle
+                        cardDealtStyle
                --newModel = case placeValue of
                --             Units -> 
                --                 {model | hovering = Nothing
