@@ -988,11 +988,43 @@ toBase3Digit n =
         _ -> Zero
 
 
-generator x =
-    (\fn ->
-        fn x
-    )
+toBase3 : Int -> Base3
+toBase3 n =
+    let
+        toBase3_ n accum =
+            if n <= 0 then
+                accum
+            else
+                toBase3_ (n // 3) ([rem n 3] ++ accum )
 
+        digits = List.map
+                    toBase3Digit
+            
+    in
+
+            
+    if n > 26 then
+        Base3 Zero Zero Zero
+    else
+        case digits <| toBase3_ n [] of
+            u :: [] ->
+                Base3 Zero Zero u
+            t :: u :: [] ->
+                Base3 Zero t u
+            n :: t :: u :: [] ->
+                Base3 n t u 
+            _ ->
+                Base3 Zero Zero Zero
+
+remainders x = 
+    List.foldl 
+        (\_ (n,rs) ->
+            (n // 3, rs ++ [rem n 3])
+            )
+        (x,[])
+        (List.range 1 3)
+
+            
 {-
 foo : PlaceValue -> Base3Digit -> ( Int -> List a -> List a)
 foo placeValue (nines,threes,units) =
