@@ -1,6 +1,6 @@
 module Gergonne exposing (..)
 
-import Html exposing (h1, div, Html)
+import Html exposing (h1,h3, div, Html)
 import Html.Attributes as Attr
 import Html.Events
 import Svg exposing (svg,rect)
@@ -10,6 +10,8 @@ import Color
 import Animation exposing (px)
 import List.Extra exposing (groupsOf, transpose, last)
 import Time
+import Random as Rnd
+import List.Extra exposing ((!!))
 
 import UI.Component.Card as Card
 
@@ -24,6 +26,7 @@ type Base3Digit = Zero | One | Two
 
 type Base3 = Base3 Base3Digit Base3Digit Base3Digit
 
+
 type Msg = 
       Msg String
     | Pickup
@@ -32,6 +35,7 @@ type Msg =
     | Animate Animation.Msg
     | Continue ScreenId
     | SelectPlaceValueColumn PlaceValue CardColumn
+    | RandomTarget Int
 
 type ScreenId =
       ChooseCard
@@ -92,6 +96,13 @@ init =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+
+        RandomTarget i ->
+            { model | 
+                target = Just i
+                , targetBase3 = toBase3 i |> Just}
+            ! [Cmd.none]
+
         Msg s ->
             {model | messages = Just s} ! [Cmd.none]
 
@@ -144,6 +155,11 @@ update msg model =
                         , sortPlace = Just Units
                     } 
                     ! [Cmd.none]
+
+                ChooseNumber ->
+                    { model | nextView = nextScreen}
+                     ! [Rnd.generate RandomTarget (Rnd.int 0 26)]
+
                 _ ->
                     { model 
                         | nextView = nextScreen
@@ -449,10 +465,24 @@ showBoardDealtScreen model =
 
 showGuess : Model -> Html Msg
 showGuess model = 
+    let
+        target = case model.target of
+                    Just n -> 
+                        n
+                    _ ->
+                        0
+
+        guess = Maybe.withDefault 
+                    (Card.Card (Card.rank "foo") 0 )
+                    ( model.deck !! target )
+                |> cardValue
+            
+    in
+            
     div []
         [ h1 [] 
-            [Html.text "Your Card was..."
-            ]
+            [Html.text "Your Card was..." ]
+        , h3 [] [Html.text <| toString guess]
         ]
 
 subscriptions : Model -> Sub Msg
@@ -1024,6 +1054,8 @@ remainders x =
         (x,[])
         (List.range 1 3)
 
+cardValue : Card.Card -> Int
+cardValue (Card.Card _ value) = value
             
 {-
 foo : PlaceValue -> Base3Digit -> ( Int -> List a -> List a)
