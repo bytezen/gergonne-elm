@@ -22,7 +22,7 @@ type PlaceValue = Units | Threes | Nines
 
 type Base3Digit = Zero | One | Two
 
-type Base3 = Base3 (Base3Digit,Base3Digit,Base3Digit)
+type Base3 = Base3 Base3Digit Base3Digit Base3Digit
 
 type Msg = 
       Msg String
@@ -37,7 +37,8 @@ type ScreenId =
       ChooseCard
     | ChooseNumber
     | Intro
-    | SelectColumn PlaceValue
+    | SelectColumn 
+    | Guess
 
 
 type alias Model = 
@@ -78,7 +79,7 @@ init =
     ,hovering = Nothing
     ,nextView = Intro
     ,target = Nothing
-    ,targetBase3 = Nothing
+    ,targetBase3 = Base3 Zero One Two |> Just
     ,sortPlace = Nothing
     ,messages = Nothing
     ,unitColumn = Nothing
@@ -137,10 +138,10 @@ update msg model =
 
         Continue nextScreen ->
             case nextScreen of
-                SelectColumn placeValue ->
+                SelectColumn ->
                     { model 
                         | nextView = nextScreen
-                        , sortPlace = Just placeValue
+                        , sortPlace = Just Units
                     } 
                     ! [Cmd.none]
                 _ ->
@@ -152,8 +153,8 @@ update msg model =
         SelectPlaceValueColumn placeValue columnNumber ->
             let
                --newStyles = pickupAnimationStyles model.styles
-               newStyles = createStyle deckStyle
-               animatedStyles = 
+                newStyles = createStyle deckStyle
+                animatedStyles = 
                     List.map4
                         (\i currentStyle intermediateAnimation finalAnimation ->
                             Animation.interrupt
@@ -169,6 +170,60 @@ update msg model =
                         model.styles
                         deckStyle
                         cardDealtStyle
+
+
+                deckGenerators : Base3 ->  List ( List a -> List a )
+                deckGenerators targetBase3 =
+                        case digit placeValue targetBase3 of
+                            Zero ->
+                                if columnNumber == 1 then
+                                    column1Top
+                                else if columnNumber == 2 then
+                                    column2Top
+                                else if columnNumber == 3 then
+                                    column3Top
+                                else
+                                    Debug.log 
+                                        ("bad columnNumber: " ++ (toString columnNumber)
+                                            ++ "returning column1,column2,column3 as order")
+                                        column1Top
+                            One ->
+                                if columnNumber == 1 then
+                                    column1Middle
+                                else if columnNumber == 2 then
+                                    column2Middle
+                                else if columnNumber == 3 then
+                                    column3Middle
+                                else
+                                    Debug.log 
+                                        ("bad columnNumber: " ++ (toString columnNumber)
+                                            ++ "returning column2,column1,column3 as order")
+                                        column1Middle
+
+                            Two ->
+                                if columnNumber == 1 then
+                                    column1Bottom
+                                else if columnNumber == 2 then
+                                    column2Bottom
+                                else if columnNumber == 3 then
+                                    column3Bottom
+                                else
+                                    Debug.log 
+                                        ("bad columnNumber: " ++ (toString columnNumber)
+                                            ++ "returning column3,column2,column1 as order")
+                                        column1Top
+
+                applyToDeck : (List Card.Card -> List Card.Card) -> List Card.Card
+                applyToDeck = (|>) model.deck
+
+                newDeck = 
+                    case model.targetBase3 of
+                        Just targetBase3 ->
+                            List.concatMap applyToDeck (deckGenerators targetBase3)
+                        _ -> 
+                            model.deck
+
+                --stackingOrder place targetBase3
                --newModel = case placeValue of
                --             Units -> 
                --                 {model | hovering = Nothing
@@ -177,9 +232,30 @@ update msg model =
                --                         , deck = updateDeck placeValue targetBase3
                --                 }
                     
+                nextPlaceValue : Maybe PlaceValue
+                nextPlaceValue =
+                    case placeValue of
+                        Units ->
+                            Just Threes
+                        Threes ->
+                            Just Nines
+                        _ ->
+                            Nothing
+
+                nextScreen : ScreenId
+                nextScreen =
+                    case placeValue of
+                        Nines ->
+                            Guess
+                        _ ->
+                            SelectColumn
+
             in
             { model | hovering = Nothing
             , styles = animatedStyles --newStyles -- pickupAnimationStyles model.styles
+            , deck = newDeck
+            , sortPlace = nextPlaceValue
+            , nextView = nextScreen
              }
             ! [Cmd.none]
         --_ ->
@@ -274,8 +350,10 @@ view model =
             showChooseNumber model
         ChooseCard ->
             showChooseCard model
-        SelectColumn placevalue ->
+        SelectColumn ->
             showBoardDealtScreen model
+        Guess ->
+            showGuess model
     {-
     let 
         fillColor = case model.hovering of
@@ -342,7 +420,7 @@ showChooseCard model =
         [
           Html.text "Choose a Card"
         , Html.button
-            [Html.Events.onClick (Continue <| SelectColumn Units)]
+            [Html.Events.onClick (Continue <| SelectColumn )]
             [Html.text "Ok"]
         ]
 
@@ -369,6 +447,13 @@ showBoardDealtScreen model =
         [Svg.g [] [dealtCardView model]]    
 -- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
 
+showGuess : Model -> Html Msg
+showGuess model = 
+    div []
+        [ h1 [] 
+            [Html.text "Your Card was..."
+            ]
+        ]
 
 subscriptions : Model -> Sub Msg
 subscriptions model = 
@@ -869,3 +954,108 @@ column1 = rowsOf3 >> columns >> List.head >> (Maybe.withDefault [])
 column2 = rowsOf3 >> columns >> List.drop 1 >> List.head >> (Maybe.withDefault [])
 column3 = rowsOf3 >> columns >> last >> (Maybe.withDefault [])
 columnTuple arr = (column1 arr, column2 arr, column3 arr)
+
+-- Hacky brute force first pass of column stacking alogrithm
+column1Top : List ( List a -> List a)
+column1Top  = [column1 , column2 , column3 ]
+column1Middle  = [column2 , column1 , column3 ]
+column1Bottom  = [column3 , column2 , column1 ]
+
+column2Top  = [column2 , column1 , column3 ]
+column2Middle  = [column1 , column2 , column3 ]
+column2Bottom  = [column1 , column3 , column2 ]
+
+column3Top  = [column3 , column2 , column1 ]
+column3Middle  = [column1 , column3 , column2 ]
+column3Bottom  = [column1 , column2 , column3 ]
+
+
+digit : PlaceValue -> Base3 -> Base3Digit
+digit p (Base3 n t u) =
+    case p of 
+        Nines ->
+            n
+        Threes -> 
+            t
+        Units ->
+            u
+
+toBase3Digit : Int -> Base3Digit
+toBase3Digit n =
+    case n of
+        1 -> One
+        2 -> Two
+        _ -> Zero
+
+
+generator x =
+    (\fn ->
+        fn x
+    )
+
+{-
+foo : PlaceValue -> Base3Digit -> ( Int -> List a -> List a)
+foo placeValue (nines,threes,units) =
+    let
+        fn xs =
+            List.foldl (++) [] 
+
+        top =
+            (\colNumber -> 
+                if colNumber == 1 then
+                    (\xs -> List.foldl (++) [] [column1 xs, column2 xs, column3 xs])
+                else if colNumber == 2 then
+                    (\xs -> List.foldl (++) [] [column2 xs, column1 xs, column3 xs])
+                else if colNumber == 3 then 
+                    (\xs -> (column3 xs, column2 xs, column1 xs))
+                else
+                    (\xs -> columnTuple xs)
+            )
+
+        mid =
+            (\colNumber -> 
+                if colNumber == 1 then
+                    (\xs -> (column2 xs, column1 xs, column3 xs))
+                else if colNumber == 2 then
+                    (\xs -> (column1 xs, column2 xs, column3 xs))
+                else if colNumber == 3 then 
+                    (\xs -> (column1 xs, column3 xs, column2 xs))
+                else
+                    always columnTuple
+            )
+
+        bot = 
+            (\colNumber -> 
+                if colNumber == 1 then
+                    (\xs -> (column3 xs, column2 xs, column1 xs))
+                else if colNumber == 2 then
+                    (\xs -> (column1 xs, column3 xs, column2 xs))
+                else if colNumber == 3 then 
+                    (\xs -> (column1 xs, column2 xs, column3 xs))
+                else
+                    always columnTuple
+            )
+
+        place = case placeValue of
+                    Units ->
+                        units
+                    Threes ->
+                        threes
+                    Nines ->
+                        nines
+
+    in
+        case place of
+            Zero -> 
+                top
+            One ->
+                mid
+            Two ->
+                bot
+
+-}
+            
+
+
+
+
