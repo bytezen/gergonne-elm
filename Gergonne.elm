@@ -10,8 +10,10 @@ import Color
 import Animation exposing (px)
 import List.Extra exposing (groupsOf, transpose, last)
 import Time
-import Random as Rnd
+import Random 
 import List.Extra exposing ((!!))
+import Random.Array
+import Array exposing (Array)
 
 import UI.Component.Card as Card
 
@@ -36,6 +38,8 @@ type Msg =
     | Continue ScreenId
     | SelectPlaceValueColumn PlaceValue CardColumn
     | RandomTarget Int
+    | Shuffle (Array Card.Card)
+    --| FisherYates Int
 
 type ScreenId =
       ChooseCard
@@ -58,6 +62,8 @@ type alias Model =
    , unitColumn: Maybe CardColumn
    , threesColumn : Maybe CardColumn
    , ninesColumn : Maybe CardColumn
+   --, fyInd : Int
+   --, fyArray : List Int
    }
 
 
@@ -89,14 +95,58 @@ init =
     ,unitColumn = Nothing
     ,threesColumn = Nothing
     ,ninesColumn = Nothing
+    --,fyInd = List.length deck
+    --,fyArray = []
     }
-    ! [Cmd.none]
+    ! [(shuffle deck)]--[Cmd.map (always Shuffle) Cmd.none]
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        Shuffle shuffledDeck ->
+            {model | 
+                deck = Array.toList shuffledDeck 
+            } 
+            ! [Cmd.none]
 
+            --let
+            --    len = List.length model.deck - 1
+            --in
+                    
+            --{model | 
+            --    fyInd = len
+            --    ,fyArray = []
+            --}
+            --! [Random.generate 
+            --    FisherYates 
+            --    (Random.int 0 len) 
+            --  ]
+
+        --FisherYates randInd ->
+        --    let
+        --        newmodel = 
+        --            { model |
+        --                fyInd = model.fyInd - 1 
+        --                ,fyArray = randInd :: model.fyArray
+        --            }
+                    
+        --    in
+                    
+        --        if newmodel.fyInd >= 0 then
+        --            newmodel ! [Random.generate FisherYates (Random.int 0 newmodel.fyInd)]
+        --        else
+        --            { model |
+        --                deck = fisherYates 
+        --                        (Card.Card (Card.rank "err") 0) 
+        --                        model.fyArray 
+        --                        model.deck --model.fyArray
+        --            } ! [Cmd.none]
+
+
+        --Shuffle ->
+            --model 
+            --! [ Random.generate RandomOrder ]
         RandomTarget i ->
             { model | 
                 target = Just i
@@ -158,7 +208,7 @@ update msg model =
 
                 ChooseNumber ->
                     { model | nextView = nextScreen}
-                     ! [Rnd.generate RandomTarget (Rnd.int 0 26)]
+                     ! [Random.generate RandomTarget (Random.int 0 26)]
 
                 _ ->
                     { model 
@@ -270,6 +320,13 @@ update msg model =
             --{model | hovering = Nothing} ! [Cmd.none]
 
 
+shuffle : List Card.Card -> Cmd Msg
+shuffle cards =
+    let
+        generator = Random.Array.shuffle (Array.fromList cards) 
+    in
+        Random.generate Shuffle generator 
+
 
 createStyle : List (List Animation.Property) -> List Animation.State
 createStyle =
@@ -368,14 +425,36 @@ showIntroScreen model =
 
 showChooseNumber : Model -> Html Msg
 showChooseNumber model =
+    let
+        btn = 
+            svgButton "testing" (Continue ChooseCard) {xp = "0", yp="0", wt = "100", ht = "100"}
+            
+    in
+            
     div
-        []
-        [
-          Html.text "Choose a Number"
+        ([Attr.style 
+            [("backgroundColor", "red")]
+         ]
+         ++
+         [Attr.align "center"
+         ]
+         ) 
+
+        ([
+          Html.p [] [Html.text "Choose a Number"]
         , Html.button
             [Html.Events.onClick (Continue ChooseCard)]
             [Html.text "Ok"]
         ]
+        ++
+        [svg 
+            [x "0", y "0"] 
+            [ rect 
+                [x "0", width "100", height "100", fill "yellow", stroke "red"] []
+            , btn
+            ]
+        ]
+        )
 
 
 showChooseCard : Model -> Html Msg
@@ -390,6 +469,18 @@ showChooseCard model =
         ]
 
 
+svgButton : String -> msg -> {b|wt:String, ht:String, xp: String, yp:String} -> Svg.Svg msg
+svgButton label msg {xp, yp, wt, ht} =
+    let
+        bg = rect [x xp, y yp, width wt, height ht, fill "black"] []
+        lbl = Svg.text_ [x xp, y "20", stroke "yellow"] [Svg.text label]
+        --Svg.text_ labelProps [Svg.text (toString value)]
+            
+    in
+            
+    Svg.g 
+        [Svg.Events.onClick msg]
+        [bg,lbl]
 
 showBoardDealtScreen : Model -> Html Msg
 showBoardDealtScreen model = 
@@ -404,7 +495,10 @@ showBoardDealtScreen model =
         [ version "1.1"
         , x "0"
         , y "0"
-        , viewBox "0 0 400 400"
+        --, viewBox "0 0 400 400"
+        , Attr.style 
+            [("padding", "50px 30px")
+            ,("height", "800px")]
         ]    
         --<| List.map2
                 --sortedCardView model.deck model.styles
