@@ -239,14 +239,6 @@ update msg model =
                         _ -> 
                             model.deck
 
-                --stackingOrder place targetBase3
-               --newModel = case placeValue of
-               --             Units -> 
-               --                 {model | hovering = Nothing
-               --                         , unitColumn = Just columnNumber
-               --                         , styles = newStyles
-               --                         , deck = updateDeck placeValue targetBase3
-               --                 }
                     
                 nextPlaceValue : Maybe PlaceValue
                 nextPlaceValue =
@@ -343,17 +335,6 @@ pickupAnimationStyles styles =
     in
         col1cards --++ col2cards ++ col3cards
             
-    --List.map 
-    --    (\style -> --newStyle ->
-    --        Animation.interrupt
-    --            [ 
-    --              --Animation.wait (toFloat i * 0.05 * second)
-    --             Animation.to [Animation.translate (px 100) (px 100)
-    --                          ] -- [offscreen] -- newStyle  
-    --            ]
-    --            style
-    --    )
-    --    styles    
 
 
 
@@ -370,39 +351,7 @@ view model =
             showBoardDealtScreen model
         Guess ->
             showGuess model
-    {-
-    let 
-        fillColor = case model.hovering of
-                        Just (Over x) -> "blue"
-                        _ -> "red"
-        --cardSvg style =
-        --    [Svg.g 
-        --        ([
-                --Svg.Events.onMouseOver (Msg "hovering")
-                --,Svg.Events.onMouseOut (Msg "leaving")
-        --        --,Svg.Events.onClick (PickupAll)
-        --        ]
-        --        ++
-        --            (Animation.render <| Animation.style style )
-        --        )
-        --        [rect cardBg []
-        --        ,Svg.text_ cardLabel [Svg.text "8"] 
-        --        ]
-        --    ]            
 
-    in 
-    svg
-        [ version "1.1"
-        , x "0"
-        , y "0"
-        , viewBox "0 0 400 400"
-        ]    
-        --<| List.map2
-                --sortedCardView model.deck model.styles
-        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model.deck model.styles]]
-        [Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]
-
--}
 
 showIntroScreen : Model -> Html Msg
 showIntroScreen model = 
@@ -596,102 +545,7 @@ columnAnimationStyle =
                  positions
             )
 
---[Animation.translate (px 0) (px 0)]
 
---layoutCards : List Card.Card -> List (List Animation.Property)
---layoutCards cards =
---    let
---        ar = 2.5 / 3.5
---        cardWidth = 50
---        cardHeight = cardWidth / ar
---        coloffset = 20 --cardWidth * 0.1
---        rowoffset =  cardHeight * 0.05
---        attr = 
---            [ Animation.attr "rx" 10 "px"
---            , Animation.attr "ry" 10 "px"
---            , Animation.width <| Animation.px cardWidth
---            , Animation.height <| Animation.px cardHeight
---            , Animation.fill Color.blue
---            ]
-
---        rows = 
---            List.map2 (,) 
---                (List.range 0 ((List.length cards) - 1)) 
---                (groupsOf 3 cards) 
-
---        offset (row,cs) =
---            let
---                cols = List.indexedMap 
---                        (\col card ->
---                            (toFloat col) * coloffset
---                        )
---                        cs
-
---                y = rowoffset * (toFloat row)
---                offsetAttr =
---                    List.map
---                        (\col ->
---                            [Animation.x col
---                            ,Animation.y y
---                            ]
---                        )
---                        cols
---            in
---                offsetAttr
---    in 
---       List.map 
---            ((++) attr )
---            <| List.concatMap offset rows
-
---sortedCardView : Card.Card -> Animation.State -> Html Msg  
---sortedCardView (Card.Card _ value) style =
---    let
---        ar = 2.5/3.5
---        cardWidth = 80.0
---        cardHeight = cardWidth / ar
---        bgProps = 
---            [
---              width <| toString cardWidth
---            , height <| toString cardHeight
---            , fill "orange"
---            , stroke "black"
---            , strokeWidth "2"
---            , rx "10"
---            , ry "10"
---            ]
-
---        labelProps =
---            [
---              stroke "black"
---            , fill "black"
---            , strokeWidth "1"
---            , x <| toString (cardWidth * 0.8)
---            , y <| toString (cardHeight * 0.2)
---            ]
-
---        attributes = 
---            --[Svg.Events.onClick Pickup]
---            --++
---            (Animation.render style)
---    in
---        Svg.g 
---            (attributes ++ [Svg.Events.onClick Pickup])
---            --((Animation.render cardstyle) 
---            --  ++ 
---            --  [
---            --    --Svg.Events.onMouseOver (Msg "hovering")
---            --  --, Svg.Events.onMouseOut (Msg "leaving")
---            --  Svg.Events.onClick Pickup
---            --  ]
---            --)
-
---            [ rect 
---                bgProps 
---                []
---            , Svg.text_ 
---                labelProps 
---                [Svg.text (toString value)]
---            ]
         
 --dealtCardView : List Card.Card -> List (Animation.State) -> Svg.Svg Msg -- Html Msg
 --dealtCardView cards styles =
@@ -1057,67 +911,7 @@ remainders x =
 cardValue : Card.Card -> Int
 cardValue (Card.Card _ value) = value
             
-{-
-foo : PlaceValue -> Base3Digit -> ( Int -> List a -> List a)
-foo placeValue (nines,threes,units) =
-    let
-        fn xs =
-            List.foldl (++) [] 
 
-        top =
-            (\colNumber -> 
-                if colNumber == 1 then
-                    (\xs -> List.foldl (++) [] [column1 xs, column2 xs, column3 xs])
-                else if colNumber == 2 then
-                    (\xs -> List.foldl (++) [] [column2 xs, column1 xs, column3 xs])
-                else if colNumber == 3 then 
-                    (\xs -> (column3 xs, column2 xs, column1 xs))
-                else
-                    (\xs -> columnTuple xs)
-            )
-
-        mid =
-            (\colNumber -> 
-                if colNumber == 1 then
-                    (\xs -> (column2 xs, column1 xs, column3 xs))
-                else if colNumber == 2 then
-                    (\xs -> (column1 xs, column2 xs, column3 xs))
-                else if colNumber == 3 then 
-                    (\xs -> (column1 xs, column3 xs, column2 xs))
-                else
-                    always columnTuple
-            )
-
-        bot = 
-            (\colNumber -> 
-                if colNumber == 1 then
-                    (\xs -> (column3 xs, column2 xs, column1 xs))
-                else if colNumber == 2 then
-                    (\xs -> (column1 xs, column3 xs, column2 xs))
-                else if colNumber == 3 then 
-                    (\xs -> (column1 xs, column2 xs, column3 xs))
-                else
-                    always columnTuple
-            )
-
-        place = case placeValue of
-                    Units ->
-                        units
-                    Threes ->
-                        threes
-                    Nines ->
-                        nines
-
-    in
-        case place of
-            Zero -> 
-                top
-            One ->
-                mid
-            Two ->
-                bot
-
--}
             
 
 
