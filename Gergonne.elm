@@ -65,8 +65,6 @@ type alias Model =
    , threesColumn : Maybe CardColumn
    , ninesColumn : Maybe CardColumn
    , isAnimating : Bool
-   --, fyInd : Int
-   --, fyArray : List Int
    }
 
 
@@ -74,21 +72,7 @@ init : ( Model, Cmd Msg )
 init =
     {
      deck = deck
-    --,styles = List.map 
-    --                (\props -> Animation.style props) 
-    --                deckStyle    
-
-    --,styles = List.map 
-    --                (\props -> Animation.style props) 
-    --                cardDealtStyle
-
     ,styles = createStyle columnAnimationStyle
-                --List.map 
-                    --(\props -> Animation.style props) 
-                    --Animation.style 
-                    --columnAnimationStyle
-
-
     ,hovering = Nothing
     ,nextView = Intro
     ,target = Nothing
@@ -99,8 +83,6 @@ init =
     ,threesColumn = Nothing
     ,ninesColumn = Nothing
     ,isAnimating = False
-    --,fyInd = List.length deck
-    --,fyArray = []
     }
     ! [(shuffle deck)]--[Cmd.map (always Shuffle) Cmd.none]
 
@@ -114,43 +96,6 @@ update msg model =
             } 
             ! [Cmd.none]
 
-            --let
-            --    len = List.length model.deck - 1
-            --in
-                    
-            --{model | 
-            --    fyInd = len
-            --    ,fyArray = []
-            --}
-            --! [Random.generate 
-            --    FisherYates 
-            --    (Random.int 0 len) 
-            --  ]
-
-        --FisherYates randInd ->
-        --    let
-        --        newmodel = 
-        --            { model |
-        --                fyInd = model.fyInd - 1 
-        --                ,fyArray = randInd :: model.fyArray
-        --            }
-                    
-        --    in
-                    
-        --        if newmodel.fyInd >= 0 then
-        --            newmodel ! [Random.generate FisherYates (Random.int 0 newmodel.fyInd)]
-        --        else
-        --            { model |
-        --                deck = fisherYates 
-        --                        (Card.Card (Card.rank "err") 0) 
-        --                        model.fyArray 
-        --                        model.deck --model.fyArray
-        --            } ! [Cmd.none]
-
-
-        --Shuffle ->
-            --model 
-            --! [ Random.generate RandomOrder ]
         RandomTarget i ->
             { model | 
                 target = Just i
@@ -166,17 +111,6 @@ update msg model =
                     --(\props -> Animation.style props) 
                     --deckStyle
                 pickupAnimationStyles model.styles
-                --List.map 
-                --    (\style -> --newStyle ->
-                --        Animation.interrupt
-                --            [ 
-                --              --Animation.wait (toFloat i * 0.05 * second)
-                --             Animation.to [Animation.translate (px 100) (px 100)
-                --                          ] -- [offscreen] -- newStyle  
-                --            ]
-                --            style
-                --    )
-                --    model.styles
             } 
             ! [Cmd.none]
             
