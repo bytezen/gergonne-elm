@@ -454,12 +454,10 @@ showBoardDealtScreen model =
                 , y "0"
                 --, viewBox "0 0 400 400"
                 , Attr.style 
-                    [("padding", "50px 30px")
-                    ,("height", "800px")]
+                [
+                --    ("padding", "50px 30px")
+                ("height", "600px")]
                 ]    
-                --<| List.map2
-                        --sortedCardView model.deck model.styles
-                --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model.deck model.styles]]
                 [Svg.g [] [dealtCardView model]]    
         -- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
     in 
