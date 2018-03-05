@@ -41,6 +41,8 @@ type Msg =
     | SelectPlaceValueColumn PlaceValue CardColumn
     | RandomTarget Int
     | Shuffle (Array Card.Card)
+    | IncrementTarget
+    | DecrementTarget
     --| FisherYates Int
 
 type ScreenId =
@@ -90,6 +92,41 @@ init =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        IncrementTarget ->
+            let
+                target_ = case model.target of
+                            Nothing ->
+                                13
+                            Just x ->
+                                x
+                target = clamp 1 27 (target_ + 1)
+            in
+                    
+                {model |
+                      target = Just target
+                    , targetBase3 = Just <| toBase3 (target - 1)
+                }
+                ! [Cmd.none]
+
+
+        DecrementTarget ->
+            let
+                target_ = case model.target of
+                            Nothing ->
+                                13
+                            Just x ->
+                                x
+                target = clamp 1 27 (target_ - 1)
+            in
+                    
+                {model |
+                      target = Just target
+                    , targetBase3 = Just <| toBase3 (target - 1)
+                }
+                ! [Cmd.none]
+                    
+
+
         Shuffle shuffledDeck ->
             {model | 
                 deck = Array.toList shuffledDeck 
@@ -376,18 +413,53 @@ showIntroScreen model =
             [Html.text "Let's see if I can guess your card..."]
         ,Html.button
             [Html.Events.onClick (Continue ChooseNumber)]
-            [Html.text "Ok"]
+            [Html.text "⇧Ok"]
         ]
 
 
 showChooseNumber : Model -> Html Msg
 showChooseNumber model =
     let
+        classes = 
+            ["w3-button"
+            , "w3-large"
+            , "w3-circle"
+            , "w3-xlarge"
+            , "w3-ripple"
+            , "w3-black"
+            ]
+        btnClasses = List.map 
+                        (\s -> (s,True))
+                        classes
+
+        incrementBtn = 
+            Html.button
+                [
+                Attr.classList btnClasses
+                , Html.Events.onClick IncrementTarget
+                ]
+                [Html.text "⇧"]
+
+        decrementBtn = 
+            Html.button
+                [
+                Attr.classList btnClasses
+                , Html.Events.onClick DecrementTarget
+                ]
+                [Html.text "⇩"]
+
+
+
         btn = 
             svgButton "testing" 
                 (Continue ChooseCard) 
                 {xp = "0", yp="0", wt = "100", ht = "100"}
-            
+
+        target = case model.target of
+                    Nothing ->
+                        0
+                    Just x ->
+                        x
     in
             
     div
@@ -401,9 +473,11 @@ showChooseNumber model =
 
         ([
           Html.p [] [Html.text "Choose a Number"]
+        , incrementBtn
         , Html.button
             [Html.Events.onClick (Continue ChooseCard)]
-            [Html.text "Ok"]
+            [Html.text (toString target)]
+        , decrementBtn
         ]
         ++
         [svg 
@@ -472,9 +546,9 @@ showBoardDealtScreen model =
 showGuess : Model -> Html Msg
 showGuess model = 
     let
-        target = case model.target of
+        target = case model.targetBase3 of
                     Just n -> 
-                        n
+                          fromBase3 n
                     _ ->
                         0
 
@@ -927,6 +1001,17 @@ toBase3Digit n =
         1 -> One
         2 -> Two
         _ -> Zero
+
+fromBase3Digit : Base3Digit -> Int
+fromBase3Digit digit =
+    case digit of
+        One -> 1
+        Two -> 2
+        _ -> 0
+
+fromBase3 : Base3 -> Int
+fromBase3 (Base3 n t u) =
+    9 * (fromBase3Digit n) + 3 * ( fromBase3Digit t) + (fromBase3Digit u)
 
 
 toBase3 : Int -> Base3
