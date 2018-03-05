@@ -8,6 +8,7 @@ import Svg.Attributes exposing (..)
 import Svg.Events
 import Color
 import Animation exposing (px)
+import Animation.Messenger
 import List.Extra exposing (groupsOf, transpose, last)
 import Time
 import Random 
@@ -31,6 +32,7 @@ type Base3 = Base3 Base3Digit Base3Digit Base3Digit
 
 type Msg = 
       Msg String
+    | AnimationOver
     | Pickup
     | Hovering HoverState
     | UnHover
@@ -52,7 +54,7 @@ type ScreenId =
 type alias Model = 
    { 
      deck : List Card.Card
-   , styles : List Animation.State
+   , styles : List (Animation.Messenger.State Msg) --List Animation.State
    , hovering : Maybe HoverState
    , nextView : ScreenId
    , target : Maybe Int
@@ -62,6 +64,7 @@ type alias Model =
    , unitColumn: Maybe CardColumn
    , threesColumn : Maybe CardColumn
    , ninesColumn : Maybe CardColumn
+   , isAnimating : Bool
    --, fyInd : Int
    --, fyArray : List Int
    }
@@ -95,6 +98,7 @@ init =
     ,unitColumn = Nothing
     ,threesColumn = Nothing
     ,ninesColumn = Nothing
+    ,isAnimating = False
     --,fyInd = List.length deck
     --,fyArray = []
     }
@@ -176,12 +180,21 @@ update msg model =
             } 
             ! [Cmd.none]
             
-        Animate time ->
-            ( { model
-                | styles = List.map (Animation.update time) model.styles
+        Animate animMsg ->
+            let
+                updateTuples = --[(styles, cmd)]
+                    List.map (Animation.Messenger.update animMsg) model.styles
+                    
+            in
+                    
+             { model
+                | styles = 
+                    List.map (Tuple.first) updateTuples
+                    --List.map (Animation.update animMsg) model.styles
               }
-            , Cmd.none
-            )
+            ! List.map (Tuple.second)  updateTuples
+               --[Cmd.none]
+            
 
         Hovering (Over x) ->
             ( { model 
@@ -216,6 +229,11 @@ update msg model =
                     }
                     ! [Cmd.none]
 
+        AnimationOver ->
+            {model |
+                isAnimating = False
+                } ! [Cmd.none]
+
         SelectPlaceValueColumn placeValue columnNumber ->
             let
                --newStyles = pickupAnimationStyles model.styles
@@ -229,6 +247,8 @@ update msg model =
                                 ,Animation.to intermediateAnimation
                                 ,Animation.wait (1 * Time.second)
                                 ,Animation.to finalAnimation
+                                ,Animation.wait ( 2 * Time.second) --let animation finish before message is sent
+                                ,Animation.Messenger.send AnimationOver
                                 ]
                                 currentStyle 
                         )
@@ -314,6 +334,7 @@ update msg model =
             , deck = newDeck
             , sortPlace = nextPlaceValue
             , nextView = nextScreen
+            , isAnimating = True
              }
             ! [Cmd.none]
         --_ ->
@@ -328,7 +349,8 @@ shuffle cards =
         Random.generate Shuffle generator 
 
 
-createStyle : List (List Animation.Property) -> List Animation.State
+--createStyle : List (List Animation.Property) -> List Animation.State
+createStyle : List (List Animation.Property) -> List (Animation.Messenger.State Msg)
 createStyle =
     List.map Animation.style 
 
@@ -337,7 +359,8 @@ createStyle =
 The offset locations are dependent on the column
 that the card is stored in
 -}
-pickupAnimationStyles : List Animation.State -> List Animation.State
+--pickupAnimationStyles : List Animation.State -> List Animation.State
+pickupAnimationStyles : List (Animation.Messenger.State Msg) -> List (Animation.Messenger.State Msg)
 pickupAnimationStyles styles =
     let
         (col1styles,col2styles,col3styles) = columnTuple styles
@@ -427,7 +450,9 @@ showChooseNumber : Model -> Html Msg
 showChooseNumber model =
     let
         btn = 
-            svgButton "testing" (Continue ChooseCard) {xp = "0", yp="0", wt = "100", ht = "100"}
+            svgButton "testing" 
+                (Continue ChooseCard) 
+                {xp = "0", yp="0", wt = "100", ht = "100"}
             
     in
             
@@ -488,23 +513,29 @@ showBoardDealtScreen model =
         fillColor = case model.hovering of
                         Just (Over x) -> "blue"
                         _ -> "red"
-          
-
+        svgElem =    
+            svg
+                [ version "1.1"
+                , x "0"
+                , y "0"
+                --, viewBox "0 0 400 400"
+                , Attr.style 
+                    [("padding", "50px 30px")
+                    ,("height", "800px")]
+                ]    
+                --<| List.map2
+                        --sortedCardView model.deck model.styles
+                --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model.deck model.styles]]
+                [Svg.g [] [dealtCardView model]]    
+        -- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
     in 
-    svg
-        [ version "1.1"
-        , x "0"
-        , y "0"
-        --, viewBox "0 0 400 400"
-        , Attr.style 
-            [("padding", "50px 30px")
-            ,("height", "800px")]
-        ]    
-        --<| List.map2
-                --sortedCardView model.deck model.styles
-        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model.deck model.styles]]
-        [Svg.g [] [dealtCardView model]]    
--- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
+        div 
+            []
+            [
+            Html.h3 [] [Html.text <| toString model.isAnimating]
+            , svgElem
+            ]
+
 
 showGuess : Model -> Html Msg
 showGuess model = 
