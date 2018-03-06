@@ -83,7 +83,7 @@ init : ( Model, Cmd Msg )
 init =
     {
      deck = deck
-    ,styles = createStyle faceUpAllStyle -- columnAnimationStyle
+    ,styles = createStyle offscreenStyle --faceUpAllStyle -- columnAnimationStyle
     ,hovering = Nothing
     ,nextView = Intro
     ,target = Nothing
@@ -203,11 +203,31 @@ update msg model =
                     { model | nextView = nextScreen}
                      ! [Random.generate RandomTarget (Random.int 0 26)]
 
+                ChooseCard ->
+                    let
+                        animatedStyles = 
+                            List.map3
+                                (\i currentStyle finalAnimation ->
+                                    Animation.interrupt
+                                        [
+                                         Animation.wait (toFloat i * 0.01 * Time.second)
+                                        , Animation.to finalAnimation
+                                        ]
+                                        currentStyle
+                                )
+                                (List.range 0 (List.length model.styles))
+                                model.styles
+                                faceUpAllStyle
+                    in
+                            
+                        { model 
+                            | nextView = nextScreen
+                            , styles = animatedStyles
+                        }
+                        ! [Cmd.none]
                 _ ->
-                    { model 
-                        | nextView = nextScreen
-                    }
-                    ! [Cmd.none]
+                    {model | nextView = nextScreen} ! [Cmd.none]
+
 
         AnimationOver ->
             {model |
@@ -540,9 +560,8 @@ showChooseCard model =
     div
         []
         [
-          Html.text "Choose a Card"
-        , svg
-            []
+         svg
+            [width "800", height "600"]
             (svgElem model)
 
         , Html.button
@@ -653,6 +672,34 @@ deck =
                     Card.Card (Card.rank "diamonds") i 
         )
         (List.range 1 27)
+
+
+
+offscreenStyle : List (List Animation.Property)
+offscreenStyle =
+    let
+        offset = 5
+        take = 3
+        yoffset = 10
+        transProperty x y = 
+            Animation.translate (px x) (px y)
+
+        translateOffscreen =
+            Animation.translate (px -100) (px -100)
+    in
+        List.map 
+            --(\i ->
+            --    if i < take then
+            --        [transProperty (i * offset) yoffset]
+            --    else
+            --        [transProperty (take * offset) yoffset] 
+            --) 
+            (always [translateOffscreen])
+            <| (List.map 
+                    toFloat 
+                    <| List.range 1 27 
+                )
+
 
 deckStyle : List (List Animation.Property)
 deckStyle =
