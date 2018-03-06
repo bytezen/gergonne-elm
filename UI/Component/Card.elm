@@ -5,10 +5,10 @@ import Svg.Attributes exposing (x,y,width,height,stroke,fill,rx,ry,style)
 import Color exposing (rgb)
 
 
-type Rank = Rank
+type Rank a = Rank a
 type alias Val = Int
 
-type Card = Card Rank Val
+type Card a = Card (Rank a) Val
 
 type alias Palette = 
         {
@@ -17,16 +17,16 @@ type alias Palette =
         }
 
 
-type alias Model = Card
+type alias Model a = Card a
 
 
-card : Rank -> Val -> Card
+card : Rank a -> Val -> Card a
 card r v = Card r v        
 
-rank : a -> Rank
-rank _ = Rank
+rank : a -> Rank a
+rank x = Rank x
 
-value : Model -> Val
+value : Model a -> Val
 value (Card _ v ) = v
 
 palette : Palette 
@@ -37,7 +37,7 @@ palette =
     }
 
 
-view : Card -> Svg msg
+view : Card a -> Svg msg
 view (Card r v) =
     let
         bg = rect cardAttributes []

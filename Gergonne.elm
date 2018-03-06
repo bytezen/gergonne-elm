@@ -17,6 +17,7 @@ import Random.Array
 import Array exposing (Array)
 
 import UI.Component.Card as Card
+import CardFaces 
 
 
 type alias CardColumn = Int
@@ -40,7 +41,7 @@ type Msg =
     | Continue ScreenId
     | SelectPlaceValueColumn PlaceValue CardColumn
     | RandomTarget Int
-    | Shuffle (Array Card.Card)
+    | Shuffle (Array (Card.Card String))
     | IncrementTarget
     | DecrementTarget
     --| FisherYates Int
@@ -63,7 +64,7 @@ type alias CardModel =
 
 type alias Model = 
    { 
-     deck : List Card.Card
+     deck : List (Card.Card String)
    , styles : List (Animation.Messenger.State Msg) --List Animation.State
    , hovering : Maybe HoverState
    , nextView : ScreenId
@@ -278,7 +279,7 @@ update msg model =
                                             ++ "returning column3,column2,column1 as order")
                                         column1Top
 
-                applyToDeck : (List Card.Card -> List Card.Card) -> List Card.Card
+                applyToDeck : (List (Card.Card String) -> List (Card.Card String) ) -> List (Card.Card String)
                 applyToDeck = (|>) model.deck
 
                 newDeck = 
@@ -320,12 +321,20 @@ update msg model =
             --{model | hovering = Nothing} ! [Cmd.none]
 
 
-shuffle : List Card.Card -> Cmd Msg
+shuffle : List (Card.Card String) -> Cmd Msg
 shuffle cards =
     let
-        generator = Random.Array.shuffle (Array.fromList cards) 
+        --generator = Random.Array.shuffle (Array.fromList cards) 
+        createCard (CardFaces.Shuffle urlArray) =
+            Array.map 
+                (\url -> 
+                    Card.Card (Card.rank url) 0
+                )
+                urlArray
+ 
     in
-        Random.generate Shuffle generator 
+        --Random.generate Shuffle generator 
+        Cmd.map (createCard >> Shuffle) CardFaces.faces            
 
 
 --createStyle : List (List Animation.Property) -> List Animation.State
@@ -507,7 +516,7 @@ showChooseCard model =
                 deck
                 styles
 
-        cardElem (Card.Card rank value) style = 
+        cardElem (Card.Card (Card.Rank url) value) style = 
             Svg.g
                 (Animation.render style)
                 [
@@ -518,7 +527,7 @@ showChooseCard model =
                     ]
                 ,Svg.image 
                     [
-                     xlinkHref "assets/images/180743.png"
+                     xlinkHref url
                     ,width "80"
                     ,height "112"
                     ] 
@@ -628,7 +637,7 @@ main =
 
 
 -- CARD Styles
-deck : List Card.Card
+deck : List (Card.Card String)
 deck = 
     List.map
         (\i -> 
@@ -888,7 +897,7 @@ dealtCardView {deck,styles,hovering,sortPlace} =
 
            
 
-deckView : List Card.Card -> List (Animation.State) -> Svg.Svg Msg
+deckView : List (Card.Card String)-> List (Animation.State) -> Svg.Svg Msg
 deckView cards styles =
     let
         ar = 2.5/3.5
@@ -1166,7 +1175,7 @@ remainders x =
         (x,[])
         (List.range 1 3)
 
-cardValue : Card.Card -> Int
+cardValue : Card.Card a -> Int
 cardValue (Card.Card _ value) = value
             
 
