@@ -53,6 +53,14 @@ type ScreenId =
     | Guess
 
 
+type alias CardModel =
+    {
+      width : Int
+    , height : Int
+    , bgProps : List (Svg.Attribute Msg)
+    , labelProps : List (Svg.Attribute Msg)
+    }
+
 type alias Model = 
    { 
      deck : List Card.Card
@@ -74,7 +82,7 @@ init : ( Model, Cmd Msg )
 init =
     {
      deck = deck
-    ,styles = createStyle columnAnimationStyle
+    ,styles = createStyle faceUpAllStyle -- columnAnimationStyle
     ,hovering = Nothing
     ,nextView = Intro
     ,target = Nothing
@@ -214,11 +222,11 @@ update msg model =
                         (\i currentStyle intermediateAnimation finalAnimation ->
                             Animation.interrupt
                                 [
-                                 Animation.wait (toFloat i * 0.05 * Time.second)
+                                 Animation.wait (toFloat i * 0.01 * Time.second)
                                 ,Animation.to intermediateAnimation
-                                ,Animation.wait (1 * Time.second)
+                                ,Animation.wait (toFloat i * 1 * Time.second)
                                 ,Animation.to finalAnimation
-                                ,Animation.wait ( 2 * Time.second) --let animation finish before message is sent
+                                ,Animation.wait ( 27 * Time.second) --let animation finish before message is sent
                                 ,Animation.Messenger.send AnimationOver
                                 ]
                                 currentStyle 
@@ -492,10 +500,41 @@ showChooseNumber model =
 
 showChooseCard : Model -> Html Msg
 showChooseCard model =
+    let
+        svgElem {deck, styles} =
+            List.map2
+                cardElem
+                deck
+                styles
+
+        cardElem (Card.Card rank value) style = 
+            Svg.g
+                (Animation.render style)
+                [
+                 rect cardModel.bgProps []
+                ,Svg.text_ 
+                    cardModel.labelProps 
+                    [Svg.text (toString value)
+                    ]
+                ,Svg.image 
+                    [
+                     xlinkHref "assets/images/180743.png"
+                    ,width "80"
+                    ,height "112"
+                    ] 
+                    []
+                ]
+            
+    in
+            
     div
         []
         [
           Html.text "Choose a Card"
+        , svg
+            []
+            (svgElem model)
+
         , Html.button
             [Html.Events.onClick (Continue <| SelectColumn )]
             [Html.text "Ok"]
@@ -528,9 +567,11 @@ showBoardDealtScreen model =
                 , y "0"
                 --, viewBox "0 0 400 400"
                 , Attr.style 
-                [
-                --    ("padding", "50px 30px")
-                ("height", "600px")]
+                    [
+                    --    ("padding", "50px 30px")
+                    ("height", "600px")
+                    ,("width", "800px")
+                    ]
                 ]    
                 [Svg.g [] [dealtCardView model]]    
         -- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
@@ -611,25 +652,54 @@ deckStyle =
         yoffset = 10
         transProperty x y = 
             Animation.translate (px x) (px y)
+
+        translateOffscreen =
+            Animation.translate (px -100) (px -100)
     in
         List.map 
-            (\i ->
-                if i < take then
-                    [transProperty (i * offset) yoffset]
-                else
-                    [transProperty (take * offset) yoffset] 
-            ) 
+            --(\i ->
+            --    if i < take then
+            --        [transProperty (i * offset) yoffset]
+            --    else
+            --        [transProperty (take * offset) yoffset] 
+            --) 
+            (always [translateOffscreen])
             <| (List.map 
                     toFloat 
                     <| List.range 1 27 
                 )
 
+faceUpAllStyle : List (List Animation.Property)
+faceUpAllStyle =
+    let
+        colCount = 7
+
+        colPadding = 1.05 * toFloat cardModel.width
+
+        rowPadding = 1.10 * toFloat cardModel.height
+
+        toPosition i =
+            ( rem i colCount, i // colCount ) 
+
+        positions =
+            List.map toPosition (List.range 0 26)
+
+    in
+        List.map 
+            (\ (x,y) ->
+                [Animation.translate
+                    (px ( toFloat x * colPadding))
+                    (px ( toFloat y * rowPadding))
+                ]
+            )
+            positions
+            
 
 
 cardDealtStyle : List (List Animation.Property)
 cardDealtStyle =
     let
-        (rowOffset, colOffset) = (20,90)
+        (rowOffset, colOffset) = (20,190)
 
         positions = List.map 
                         (\(x,y) -> 
@@ -642,7 +712,8 @@ cardDealtStyle =
             (\(x,y) ->
                 [Animation.translate 
                     (px (colOffset * x)) 
-                    (px (rowOffset * y))
+                    (px (rowOffset * 1))
+                    --(px (rowOffset * y))
                 ]
             )
             positions
@@ -651,7 +722,7 @@ cardDealtStyle =
 columnAnimationStyle : List (List Animation.Property)
 columnAnimationStyle =
         let
-        (rowOffset, colOffset) = (20,90)
+        (rowOffset, colOffset) = (20,200) --(20,90)
 
         positions = List.map 
                         (\(x,y) -> 
@@ -721,11 +792,21 @@ dealtCardView {deck,styles,hovering,sortPlace} =
             , y <| toString (cardHeight * 0.2)
             ]
 
+        -- card display element
+
         cardElem (Card.Card rank value) style = 
             Svg.g
                 (Animation.render style)
-                [rect bgProps []
+                [
+                 rect bgProps []
                 ,Svg.text_ labelProps [Svg.text (toString value)]
+                ,Svg.image 
+                    [
+                     xlinkHref "assets/images/180743.png"
+                    ,width "80"
+                    ,height "112"
+                    ] 
+                    []
                 ]
 
         highlight col = 
@@ -739,7 +820,14 @@ dealtCardView {deck,styles,hovering,sortPlace} =
                         else
                             0 
             in
-                rect [x (toString xoff), width "90", height "300", stroke "blue", fill "red"] []
+                rect 
+                    [x (toString xoff)
+                    , width "90"
+                    , height "300"
+                    , stroke "blue"
+                    , fill "red"
+                    ] 
+                    []
 
 
         onclickMsg = case sortPlace of
@@ -948,7 +1036,35 @@ boardCol2Offset = (100,0)
 boardCol3Offset = (200,0)
 
 --cardDimensions 
-cardWIDTH = 80.0
+cardWIDTH = 80
+cardAR = 2.5 / 3.5
+cardHEIGHT = floor ( (toFloat cardWIDTH) / cardAR )
+
+cardModel : CardModel
+cardModel = 
+    {
+      width = cardWIDTH
+    , height = cardHEIGHT
+    , bgProps = 
+        [
+          width <| toString cardWIDTH
+        , height <| toString cardHEIGHT
+        , fill "orange"
+        , stroke "black"
+        , strokeWidth "2"
+        , rx "10"
+        , ry "10"
+        ]
+    , labelProps =
+        [
+          stroke "black"
+        , fill "black"
+        , strokeWidth "1"
+        , x <| toString ( toFloat cardWIDTH * 0.05)
+        , y <| toString ( toFloat cardHEIGHT * 0.2)
+        ]
+
+    }
 
 
 
