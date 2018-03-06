@@ -331,6 +331,7 @@ shuffle cards =
                     Card.Card (Card.rank url) 0
                 )
                 urlArray
+            |> Array.slice 0 27
  
     in
         --Random.generate Shuffle generator 
