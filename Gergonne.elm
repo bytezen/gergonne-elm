@@ -18,7 +18,7 @@ import Array exposing (Array)
 
 import UI.Component.Card as Card
 import CardFaces 
-
+import Buttons
 
 type alias CardColumn = Int
 
@@ -193,9 +193,30 @@ update msg model =
         Continue nextScreen ->
             case nextScreen of
                 SelectColumn ->
+                    let
+                       animatedStyles = 
+                            List.map4
+                                (\i currentStyle intermediateStyle finalStyle ->
+                                    Animation.interrupt
+                                        [
+                                         Animation.wait (toFloat i * 0.01 * Time.second)
+                                        , Animation.to intermediateStyle 
+                                        , Animation.wait (toFloat i * 0.01 * Time.second)
+                                        , Animation.to finalStyle
+                                        ]
+                                        currentStyle
+                                )
+                                (List.range 0 (List.length model.styles))
+                                model.styles
+                                offscreenStyle
+                                threePileStyle   
+                            
+                    in
+                            
                     { model 
                         | nextView = nextScreen
                         , sortPlace = Just Units
+                        , styles = animatedStyles
                     } 
                     ! [Cmd.none]
 
@@ -255,7 +276,7 @@ update msg model =
                         (List.range 0 (List.length model.styles))
                         model.styles
                         deckStyle
-                        cardDealtStyle
+                        threePileStyle
 
 
                 deckGenerators : Base3 ->  List ( List a -> List a )
@@ -449,9 +470,10 @@ showIntroScreen model =
         [h1 
             [] 
             [Html.text "Let's see if I can guess your card..."]
-        ,Html.button
-            [Html.Events.onClick (Continue ChooseNumber)]
-            [Html.text "⇧Ok"]
+        , Buttons.next (Continue ChooseNumber)
+        --,Html.button
+        --    [Html.Events.onClick (Continue ChooseNumber)]
+        --    [Html.text "⇧Ok"]
         ]
 
 
@@ -470,21 +492,21 @@ showChooseNumber model =
                         (\s -> (s,True))
                         classes
 
-        incrementBtn = 
-            Html.button
-                [
-                Attr.classList btnClasses
-                , Html.Events.onClick IncrementTarget
-                ]
-                [Html.text "⇧"]
+        --incrementBtn = 
+        --    Html.button
+        --        [
+        --        Attr.classList btnClasses
+        --        , Html.Events.onClick IncrementTarget
+        --        ]
+        --        [Html.text "⇧"]
 
-        decrementBtn = 
-            Html.button
-                [
-                Attr.classList btnClasses
-                , Html.Events.onClick DecrementTarget
-                ]
-                [Html.text "⇩"]
+        --decrementBtn = 
+        --    Html.button
+        --        [
+        --        Attr.classList btnClasses
+        --        , Html.Events.onClick DecrementTarget
+        --        ]
+        --        [Html.text "⇩"]
 
 
 
@@ -511,11 +533,11 @@ showChooseNumber model =
 
         ([
           Html.p [] [Html.text "Choose a Number"]
-        , incrementBtn
+        , Buttons.increment IncrementTarget
         , Html.button
             [Html.Events.onClick (Continue ChooseCard)]
             [Html.text (toString target)]
-        , decrementBtn
+        , Buttons.decrement DecrementTarget
         ]
         ++
         [svg 
@@ -564,9 +586,7 @@ showChooseCard model =
             [width "800", height "600"]
             (svgElem model)
 
-        , Html.button
-            [Html.Events.onClick (Continue <| SelectColumn )]
-            [Html.text "Ok"]
+        , Buttons.next (Continue <| SelectColumn )
         ]
 
 
@@ -753,8 +773,8 @@ faceUpAllStyle =
             
 
 
-cardDealtStyle : List (List Animation.Property)
-cardDealtStyle =
+threePileStyle : List (List Animation.Property)
+threePileStyle =
     let
         (rowOffset, colOffset) = (20,190)
 
@@ -776,6 +796,28 @@ cardDealtStyle =
             positions
             
 
+threeColumnStyle : List (List Animation.Property)
+threeColumnStyle =
+    let
+        (rowOffset, colOffset) = (20,190)
+
+        positions = List.map 
+                        (\(x,y) -> 
+                            (toFloat x, toFloat y) 
+                        )
+                        (List.map gridPos <| List.range 0 26 )
+
+    in
+        List.map 
+            (\(x,y) ->
+                [Animation.translate 
+                    (px (colOffset * x)) 
+                    (px (rowOffset * 1))
+                    --(px (rowOffset * y))
+                ]
+            )
+            positions
+ 
 columnAnimationStyle : List (List Animation.Property)
 columnAnimationStyle =
         let
@@ -811,9 +853,9 @@ columnAnimationStyle =
 dealtCardView : Model -> Svg.Svg Msg -- Html Msg
 dealtCardView {deck,styles,hovering,sortPlace} = 
     let
-        ar = 2.5/3.5
-        cardWidth = 80.0
-        cardHeight = cardWidth / ar
+        --ar = 2.5/3.5
+        --cardWidth = 80.0
+        --cardHeight = cardWidth / ar
 
         (col1,col1style,bg1) =  (column1 deck, column1 styles, highlightStyle 1)  
         (col2,col2style,bg2) =  (column2 deck, column2 styles, highlightStyle 2)  
@@ -828,11 +870,10 @@ dealtCardView {deck,styles,hovering,sortPlace} =
                         rect [] []
                 _ ->
                     rect [] []
-
         bgProps = 
             [
-              width <| toString cardWidth
-            , height <| toString cardHeight
+              width <| toString cardModel.width
+            , height <| toString cardModel.height
             , fill "orange"
             , stroke "black"
             , strokeWidth "2"
@@ -845,13 +886,13 @@ dealtCardView {deck,styles,hovering,sortPlace} =
               stroke "black"
             , fill "black"
             , strokeWidth "1"
-            , x <| toString (cardWidth * 0.05)
-            , y <| toString (cardHeight * 0.2)
+            , x <| toString (toFloat cardModel.width * 0.05)
+            , y <| toString (toFloat cardModel.height * 0.2)
             ]
 
         -- card display element
 
-        cardElem (Card.Card rank value) style = 
+        cardElem (Card.Card (Card.Rank url) value) style = 
             Svg.g
                 (Animation.render style)
                 [
@@ -859,9 +900,9 @@ dealtCardView {deck,styles,hovering,sortPlace} =
                 ,Svg.text_ labelProps [Svg.text (toString value)]
                 ,Svg.image 
                     [
-                     xlinkHref "assets/images/180743.png"
-                    ,width "80"
-                    ,height "112"
+                     xlinkHref url
+                    ,width <| toString cardModel.width
+                    ,height <| toString cardModel.height
                     ] 
                     []
                 ]
