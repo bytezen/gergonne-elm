@@ -19,6 +19,7 @@ import Array exposing (Array)
 import UI.Component.Card as Card
 import CardFaces 
 import Buttons
+import Modal exposing (Modal(..))
 
 type alias CardColumn = Int
 
@@ -44,6 +45,7 @@ type Msg =
     | Shuffle (Array (Card.Card String))
     | IncrementTarget
     | DecrementTarget
+    | CloseModal
     --| FisherYates Int
 
 type ScreenId =
@@ -76,6 +78,7 @@ type alias Model =
    , threesColumn : Maybe CardColumn
    , ninesColumn : Maybe CardColumn
    , isAnimating : Bool
+   , showModal : Bool
    }
 
 
@@ -94,6 +97,7 @@ init =
     ,threesColumn = Nothing
     ,ninesColumn = Nothing
     ,isAnimating = False
+    ,showModal = False
     }
     ! [(shuffle deck)]--[Cmd.map (always Shuffle) Cmd.none]
 
@@ -101,6 +105,9 @@ init =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        CloseModal ->
+            {model | showModal = False} ! [Cmd.none]
+
         IncrementTarget ->
             let
                 target_ = case model.target of
@@ -201,8 +208,10 @@ update msg model =
                                         [
                                          Animation.wait (toFloat i * 0.01 * Time.second)
                                         , Animation.to intermediateStyle 
-                                        , Animation.wait (toFloat i * 0.01 * Time.second)
+                                        , Animation.wait (toFloat i * 0.5 * Time.second)
                                         , Animation.to finalStyle
+                                        --, Animation.wait (toFloat 1 * Time.second)
+                                        --, Animation.Messenger.send AnimationOver
                                         ]
                                         currentStyle
                                 )
@@ -217,6 +226,8 @@ update msg model =
                         | nextView = nextScreen
                         , sortPlace = Just Units
                         , styles = animatedStyles
+                        , isAnimating = True
+                        --, showModal = True
                     } 
                     ! [Cmd.none]
 
@@ -233,6 +244,8 @@ update msg model =
                                         [
                                          Animation.wait (toFloat i * 0.01 * Time.second)
                                         , Animation.to finalAnimation
+                                        , Animation.wait (toFloat 1 * Time.second)
+                                        , Animation.Messenger.send AnimationOver
                                         ]
                                         currentStyle
                                 )
@@ -244,6 +257,8 @@ update msg model =
                         { model 
                             | nextView = nextScreen
                             , styles = animatedStyles
+                            , isAnimating = True
+                            , showModal = True
                         }
                         ! [Cmd.none]
                 _ ->
@@ -266,7 +281,7 @@ update msg model =
                                 [
                                  Animation.wait (toFloat i * 0.01 * Time.second)
                                 ,Animation.to intermediateAnimation
-                                ,Animation.wait (toFloat i * 1 * Time.second)
+                                ,Animation.wait (toFloat i * 0.50 * Time.second)
                                 ,Animation.to finalAnimation
                                 ,Animation.wait ( 27 * Time.second) --let animation finish before message is sent
                                 ,Animation.Messenger.send AnimationOver
@@ -367,9 +382,9 @@ shuffle cards =
     let
         --generator = Random.Array.shuffle (Array.fromList cards) 
         createCard (CardFaces.Shuffle urlArray) =
-            Array.map 
-                (\url -> 
-                    Card.Card (Card.rank url) 0
+            Array.indexedMap 
+                (\i url -> 
+                    Card.Card (Card.rank url) i
                 )
                 urlArray
             |> Array.slice 0 27
@@ -553,6 +568,13 @@ showChooseNumber model =
 showChooseCard : Model -> Html Msg
 showChooseCard model =
     let
+
+        copy = "Choose your favorite CEE educator..."
+
+        showModal = model.showModal && (not model.isAnimating)
+
+        modal = Modal copy showModal CloseModal 
+
         svgElem {deck, styles} =
             List.map2
                 cardElem
@@ -582,7 +604,8 @@ showChooseCard model =
     div
         []
         [
-         svg
+          Modal.window modal
+        , svg
             [width "800", height "600"]
             (svgElem model)
 
@@ -645,15 +668,32 @@ showGuess model =
         guess = Maybe.withDefault 
                     (Card.Card (Card.rank "foo") 0 )
                     ( model.deck !! target )
-                |> cardValue
+                
+
+        cardElem (Card.Card (Card.Rank url) value) = 
+            Svg.g
+                --(Animation.render style)
+                [ transform "translate(200,100)" ]
+                [
+                 rect cardModel.bgProps []
+                ,Svg.text_ cardModel.labelProps [Svg.text (toString value)]
+                ,Svg.image 
+                    [
+                     xlinkHref url
+                    ,width <| toString cardModel.width
+                    ,height <| toString cardModel.height
+                    ] 
+                    []
+                ]        
             
     in
             
-    div []
-        [ h1 [] 
-            [Html.text "Your Card was..." ]
-        , h3 [] [Html.text <| toString guess]
-        ]
+        div []
+            [ 
+              h1 [] 
+                [Html.text "Your favorite educator is ..." ]
+            , svg [] [cardElem guess]
+            ]
 
 subscriptions : Model -> Sub Msg
 subscriptions model = 

@@ -7,9 +7,6 @@ import Html.Events exposing (onClick)
 modal : msg -> Html msg
 modal =
     createButton "✘" 
-    --button 
-    --    ([onClick msg] ++ [classList w3Button])
-    --    [text "✘"]
 
 
 next : msg -> Html msg
@@ -33,6 +30,8 @@ reload =
 restart: msg -> Html msg
 restart =
     createButton "↩"
+
+
 
 
 
