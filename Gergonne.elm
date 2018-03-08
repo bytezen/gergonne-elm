@@ -662,8 +662,8 @@ showChooseCard model =
                 ,Svg.image 
                     [
                      xlinkHref url
-                    ,width "80"
-                    ,height "112"
+                    ,width (toString cardModel.width)
+                    ,height (toString cardModel.height)
                     ] 
                     []
                 ]
@@ -874,9 +874,9 @@ faceUpAllStyle =
     let
         colCount = 7
 
-        colPadding = 1.05 * toFloat cardModel.width
+        colPadding = 1.15 * toFloat cardModel.width
 
-        rowPadding = 1.10 * toFloat cardModel.height
+        rowPadding = 1.20 * toFloat cardModel.height
 
         toPosition i =
             ( rem i colCount, i // colCount ) 
@@ -999,8 +999,8 @@ dealtCardView {deck,styles,hovering,sortPlace} =
             , fill "orange"
             , stroke "black"
             , strokeWidth "2"
-            , rx "10"
-            , ry "10"
+            , rx "1"
+            , ry "1"
             ]
 
         labelProps =
@@ -1019,12 +1019,12 @@ dealtCardView {deck,styles,hovering,sortPlace} =
                 (Animation.render style)
                 [
                  rect bgProps []
-                ,Svg.text_ labelProps [Svg.text (toString value)]
+                --,Svg.text_ labelProps [Svg.text (toString value)]
                 ,Svg.image 
                     [
                      xlinkHref url
-                    ,width <| toString cardModel.width
-                    ,height <| toString cardModel.height
+                    ,width <| toString cardModel.width 
+                    ,height <| toString cardModel.height 
                     ] 
                     []
                 ]
@@ -1124,7 +1124,7 @@ deckView cards styles =
             [
               width <| toString cardWidth
             , height <| toString cardHeight
-            , fill "orange"
+            --, fill "orange"
             , stroke "black"
             , strokeWidth "2"
             , rx "10"
@@ -1166,7 +1166,7 @@ cardBg =
             [
               width <| toString cardWidth
             , height <| toString cardHeight
-            , fill "orange"
+            --, fill "orange"
             , stroke "black"
             , strokeWidth "2"
             , rx "10"
@@ -1194,67 +1194,66 @@ cardLabel =
     in    
         labelProps
 
-card =
-    let
-        ar = 2.5/3.5
-        cardWidth = 80.0
-        cardHeight = cardWidth / ar
-        bgProps =
-            [
-              Animation.width (px cardWidth)
-            , Animation.height (px cardHeight)
-            , Animation.fill Color.orange
-            , Animation.stroke Color.black
-            , Animation.strokeWidth 3
-            , Animation.custom "rx" 10 "px"
-            , Animation.custom "ry" 10 "px"
-            ]            
+--card =
+--    let
+--        ar = 2.5/3.5
+--        cardWidth = 80.0
+--        cardHeight = cardWidth / ar
+--        bgProps =
+--            [
+--              Animation.width (px cardWidth)
+--            , Animation.height (px cardHeight)
+--            --, Animation.fill Color.orange
+--            , Animation.stroke Color.black
+--            , Animation.strokeWidth 3
+--            , Animation.custom "rx" 10 "px"
+--            , Animation.custom "ry" 10 "px"
+--            ]            
 
-        labelProps =
-            [ Animation.stroke Color.black
-            , Animation.x (cardWidth * 0.8)
-            , Animation.y (cardHeight * 0.2)
-            ]
+--        labelProps =
+--            [ Animation.stroke Color.black
+--            , Animation.x (cardWidth * 0.8)
+--            , Animation.y (cardHeight * 0.2)
+--            ]
 
-        props =
-            let 
-                (col,row) = gridPos 0
-            in
-                [ Animation.transformOrigin 
-                    (px (toFloat col))
-                    (px (toFloat row))
-                    (px 0.0)
-                ]
+--        props =
+--            let 
+--                (col,row) = gridPos 0
+--            in
+--                [ Animation.transformOrigin 
+--                    (px (toFloat col))
+--                    (px (toFloat row))
+--                    (px 0.0)
+--                ]
 
-    in
-        bgProps
+--    in
+--        bgProps
             
 
 
-cards : List (List Animation.Property)
-cards =
-    let
-        ar = 2.5 / 3.5
-        cardWidth = 50
-        cardHeight = cardWidth / ar
-        rowOffset = 30
-        colOffset = cardWidth * 1.05
-        positions = List.map gridPos <| List.range 0 26
-        toAnimationProperty (col,row) = 
-            [ Animation.x <| (colOffset * col)
-            , Animation.y <| (rowOffset * row)
-            , Animation.width (px cardWidth)
-            , Animation.height (px cardHeight)
-            , Animation.fill Color.orange
-            , Animation.stroke Color.black
-            , Animation.custom "rx" 10 "px"
-            , Animation.custom "ry" 10 "px"
-            ]
-    in
-        List.map 
-            toAnimationProperty
-            <| List.map (\(x,y) -> (toFloat x, toFloat y) ) positions
-        --List.map toAnimationProperty positions
+--cards : List (List Animation.Property)
+--cards =
+--    let
+--        ar = 2.5 / 3.5
+--        cardWidth = 50
+--        cardHeight = cardWidth / ar
+--        rowOffset = 30
+--        colOffset = cardWidth * 1.05
+--        positions = List.map gridPos <| List.range 0 26
+--        toAnimationProperty (col,row) = 
+--            [ Animation.x <| (colOffset * col)
+--            , Animation.y <| (rowOffset * row)
+--            , Animation.width (px cardWidth)
+--            , Animation.height (px cardHeight)
+--            --, Animation.fill Color.orange
+--            , Animation.stroke Color.black
+--            , Animation.custom "rx" 10 "px"
+--            , Animation.custom "ry" 10 "px"
+--            ]
+--    in
+--        List.map 
+--            toAnimationProperty
+--            <| List.map (\(x,y) -> (toFloat x, toFloat y) ) positions
 
 -- Coordinate Constants
 boardCol1Offset = (0,0)
@@ -1264,7 +1263,7 @@ boardCol3Offset = (200,0)
 --cardDimensions 
 cardWIDTH = 80
 cardAR = 2.5 / 3.5
-cardHEIGHT = floor ( (toFloat cardWIDTH) / cardAR )
+cardHEIGHT = 100 --floor ( (toFloat cardWIDTH) / cardAR )
 
 cardModel : CardModel
 cardModel = 
@@ -1275,11 +1274,11 @@ cardModel =
         [
           width <| toString cardWIDTH
         , height <| toString cardHEIGHT
-        , fill "orange"
+        , fill "blue"
         , stroke "black"
         , strokeWidth "2"
-        , rx "10"
-        , ry "10"
+        , rx "1"
+        , ry "1"
         ]
     , labelProps =
         [
