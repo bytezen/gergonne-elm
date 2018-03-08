@@ -5,8 +5,11 @@ import Html.Attributes exposing (classList)
 import Html.Events exposing (onClick)
 
 modal : msg -> Html msg
-modal =
-    createButton "✘" 
+modal msg =
+    button 
+        ([onClick msg] ++ [classList w3ModalButton])
+        [text "got it"]   
+    --createButton "got it" --"✘" 
 
 
 next : msg -> Html msg
@@ -56,6 +59,26 @@ createSquareButton label msg =
         ([onClick msg] ++ [classList w3SquareButton])
         [text label]    
             
+
+
+w3ModalButton : List (String, Bool)
+w3ModalButton =
+    let
+        classes = 
+            ["w3-btn"
+            , "w3-round-xlarge"
+            , "w3-white"
+            , "w3-border"
+            , "w3-border-blue"
+            , "w3-white"
+            ]
+
+        btnClasses = List.map 
+                        (\s -> (s,True))
+                        classes    
+    in
+        btnClasses            
+
 
 w3SquareButton : List (String, Bool)
 w3SquareButton =

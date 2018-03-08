@@ -31,6 +31,11 @@ type Base3Digit = Zero | One | Two
 
 type Base3 = Base3 Base3Digit Base3Digit Base3Digit
 
+type ModalId = 
+      IntroModal
+    | ChooseCardModal
+    | ChooseNumberModal
+    | SelectPileModal 
 
 type Msg = 
       Msg String
@@ -45,7 +50,8 @@ type Msg =
     | Shuffle (Array (Card.Card String))
     | IncrementTarget
     | DecrementTarget
-    | CloseModal
+    | CloseModal ModalId
+    | ShowModal ModalId
     --| FisherYates Int
 
 type ScreenId =
@@ -64,6 +70,14 @@ type alias CardModel =
     , labelProps : List (Svg.Attribute Msg)
     }
 
+type alias ModalModel =
+    {
+      showIntro : Bool
+    , showChooseNumber : Bool
+    , showChooseCard : Bool 
+    , showSelectPile : Bool
+    }
+
 type alias Model = 
    { 
      deck : List (Card.Card String)
@@ -78,7 +92,8 @@ type alias Model =
    , threesColumn : Maybe CardColumn
    , ninesColumn : Maybe CardColumn
    , isAnimating : Bool
-   , showModal : Bool
+   --, showModal : Bool
+   , modalModel : ModalModel
    }
 
 
@@ -97,16 +112,68 @@ init =
     ,threesColumn = Nothing
     ,ninesColumn = Nothing
     ,isAnimating = False
-    ,showModal = False
+    --,showModal = False
+    ,modalModel = initModalModel
     }
     ! [(shuffle deck)]--[Cmd.map (always Shuffle) Cmd.none]
 
 
+initModalModel : ModalModel
+initModalModel =
+    {
+    showIntro = True
+    ,showChooseCard = True
+    ,showChooseNumber = True
+    ,showSelectPile = False
+    }
+
+
+closeModal : ModalModel
+closeModal =
+    initModalModel
+
+setModal : ModalId -> Bool -> ModalModel -> ModalModel
+setModal id show model =
+            case id of
+                IntroModal ->
+                    {model | showIntro = show} 
+                ChooseNumberModal->
+                    {model | showChooseNumber = show }
+                ChooseCardModal ->
+                    {model | showChooseCard = show} 
+                SelectPileModal ->
+                    {model | showSelectPile = show} 
+
+toggleModalModel : ModalId -> ModalModel -> ModalModel
+toggleModalModel id ({showIntro, showChooseCard, showChooseNumber, showSelectPile} as model) =
+                    model
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        CloseModal ->
-            {model | showModal = False} ! [Cmd.none]
+        ShowModal id ->
+            {model | modalModel = setModal id True model.modalModel}
+            ! [Cmd.none]
+
+        CloseModal id ->
+            {model | modalModel = setModal id False model.modalModel}
+            ! [Cmd.none]            
+            --let
+                --modalModel = model.modalModel
+                --newModalModel = setModal id False model.modalModel
+                    --case id of
+                    --    IntroModal ->
+                    --        {modalModel | showIntro = False} 
+                    --    ChooseNumberModal->
+                    --        {modalModel | showChooseNumber = False }
+                    --    ChooseCardModal ->
+                    --        {modalModel | showChooseCard = False} 
+                    --    SelectPileModal ->
+                    --        {modalModel | showSelectPile = False} 
+            --in
+            --    {model | modalModel = newModalModel } ! [Cmd.none]
+
+
 
         IncrementTarget ->
             let
@@ -227,6 +294,7 @@ update msg model =
                         , sortPlace = Just Units
                         , styles = animatedStyles
                         , isAnimating = True
+                        , modalModel = setModal SelectPileModal False model.modalModel
                         --, showModal = True
                     } 
                     ! [Cmd.none]
@@ -258,7 +326,7 @@ update msg model =
                             | nextView = nextScreen
                             , styles = animatedStyles
                             , isAnimating = True
-                            , showModal = True
+                            --, showModal = True
                         }
                         ! [Cmd.none]
                 _ ->
@@ -495,6 +563,13 @@ showIntroScreen model =
 showChooseNumber : Model -> Html Msg
 showChooseNumber model =
     let
+
+        copy = "Choose a number between 1 and 27. When you are done click the number button."
+
+        showModal = model.modalModel.showChooseNumber
+
+        modal = Modal copy showModal (CloseModal ChooseNumberModal)
+
         classes = 
             ["w3-button"
             , "w3-large"
@@ -525,16 +600,17 @@ showChooseNumber model =
         -- ) 
         []
         ([
-          h1 [] [Html.text "Choose a Number"]
-        , div [class "w3-section"] [Buttons.increment IncrementTarget]
-        , div 
+           Modal.window modal
+         , h1 [] [Html.text "Choose a Number"]
+         , div [class "w3-section"] [Buttons.increment IncrementTarget]
+         , div 
             [class "w3-section" ] [Buttons.squareLabelled(toString target) (Continue ChooseCard)]
             --[Html.button
             --    [Html.Events.onClick (Continue ChooseCard)]
             --    [Html.text (toString target)]
             --]
-        , div [class "w3-section" ] [ Buttons.decrement DecrementTarget]
-        ]
+         , div [class "w3-section" ] [ Buttons.decrement DecrementTarget]
+         ]
         --++
         --[svg 
         --    [x "0", y "0"] 
@@ -550,11 +626,23 @@ showChooseCard : Model -> Html Msg
 showChooseCard model =
     let
 
-        copy = "Choose your favorite CEE educator..."
+        chooseCardCopy = "SECRETLY choose a favorite Center Educator...Then click the Next button."
+        --Find a favorite educator, BUT DO NOT CLICK ON THEMChoose your favorite CEE educator..."
+        selectPileCopy = "PAY CLOSE ATTENTION !! I am going to place images into 3 piles. You have to remember the pile where I layed your SECRET educator. When I am done placing the cards click the pile where your educator was placed." 
 
-        showModal = model.showModal && (not model.isAnimating)
+        --showChooseCardModal = model.modalModel.showChooseCard --model.showModal && (not model.isAnimating)
 
-        modal = Modal copy showModal CloseModal 
+        chooseCardModal = 
+            Modal 
+                chooseCardCopy 
+                model.modalModel.showChooseCard 
+                (CloseModal ChooseCardModal) 
+
+
+        selectPileModal = 
+            Modal.selectPileModal 
+                model.modalModel.showSelectPile
+                (Continue SelectColumn)  
 
         svgElem {deck, styles} =
             List.map2
@@ -585,12 +673,13 @@ showChooseCard model =
     div
         []
         [
-          Modal.window modal
+          Modal.window chooseCardModal
+        , selectPileModal
         , svg
             [width "800", height "600"]
             (svgElem model)
 
-        , Buttons.next (Continue <| SelectColumn )
+        , Buttons.next (ShowModal SelectPileModal) --(Continue <| SelectColumn )
         ]
 
 
@@ -628,11 +717,20 @@ showBoardDealtScreen model =
                 ]    
                 [Svg.g [] [dealtCardView model]]    
         -- PREVIOUS!!        --[Svg.g [Svg.Events.onClick Pickup] [dealtCardView model]]    
+
+        showModal = model.modalModel.showSelectPile --model.showModal && (not model.isAnimating)
+
+        modal = Modal copy showModal (Continue <| SelectColumn ) --(CloseModal SelectPileModal) 
+
+        copy = "PAY CLOSE ATTENTION !! I am going to place images into 3 piles. You have to remember the pile where I layed your SECRET educator. When I am done placing the cards click the pile where your educator was placed." 
+
+
     in 
         div 
             []
             [
-            Html.h3 [] [Html.text <| toString model.isAnimating]
+             --Modal.window modal
+             Html.h3 [] [Html.text <| toString model.isAnimating]
             , svgElem
             ]
 

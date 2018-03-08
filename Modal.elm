@@ -1,6 +1,6 @@
-module Modal exposing (window, Modal (..) )
+module Modal exposing (window,selectPileModal, Modal (..) )
 
-import Html exposing (Html, div, span, text)
+import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 
@@ -22,7 +22,7 @@ window (Modal copy isopen msg) =
         copyDiv =
             div
                 []
-                [text copy]
+                [Html.h2 [] [text copy] ]
 
         containerDiv =
             div
@@ -32,8 +32,8 @@ window (Modal copy isopen msg) =
                 ]
 
                 [
-                  Buttons.modal msg
-                , copyDiv 
+                 copyDiv 
+                , Buttons.modal msg
                 ]
 
         contentDiv =
@@ -48,22 +48,64 @@ window (Modal copy isopen msg) =
             
     div 
         [class "w3-modal"
-        ,style [displayStyle]
+        ,style [displayStyle,("min-height","800px")]
         ]
         [
           contentDiv
         ]
 
+selectPileModal : Bool -> msg -> Html msg
+selectPileModal isopen msg =
+    let
+        copyDiv = 
+            div
+                []
+                [
+                 p [] [Html.text "PAY CLOSE ATTENTION !! "]
+                ,p [] [Html.text "I am going to place images into 3 piles."]
+                ,p [] [Html.text "You have to remember the pile where I layed your SECRET educator."]
+                ,p [] [Html.text "When I am done placing the cards click the pile where your educator was placed."]
+                ,p [] [Html.text "We are going to do this 3 times..."]
+                -- ]
+                ]
 
---<div class="w3-modal" style="display: block;">
---    <div class="w3-modal-content">
---        <div class="w3-container w3-red">
---            <span class="w3-button w3-display-topright _w3-large w3-circle w3-xlarge _w3-ripple w3-black" >
---                ✘
---            </span>
---            <div><h1>Instructions for the thing</h1>
---            </div>
---        </div>
---    </div>
---</div>
+
+        displayStyle =
+            if isopen then
+                ("display", "block")
+            else
+                ("display", "none")
+
+        containerDiv =
+            div
+                [
+                  class "w3-container"
+                , class "w3-red"
+                ]
+
+                [
+                 copyDiv 
+                , Buttons.modal msg
+                ]
+
+        contentDiv =
+            div
+                [
+                  class "w3-modal-content"
+                ]
+
+                [ containerDiv ]
+            
+    in
+        div 
+            [class "w3-modal"
+            ,style [displayStyle,("min-height","800px")]
+            ]
+            [
+              contentDiv
+            ]    
+        --Modal 
+        --    selectPileCopy 
+        --    model.modalModel.showSelectPile 
+        --    (Continue SelectColumn) 
 
