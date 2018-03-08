@@ -893,13 +893,12 @@ faceUpAllStyle =
                 ]
             )
             positions
-            
 
 
 threePileStyle : List (List Animation.Property)
 threePileStyle =
     let
-        (rowOffset, colOffset) = (20,190)
+        (rowOffset, colOffset) = (20,pileColumnOffset)
 
         positions = List.map 
                         (\(x,y) -> 
@@ -1033,18 +1032,24 @@ dealtCardView {deck,styles,hovering,sortPlace} =
         highlight col = 
             let
                 xoff = if col == 1 then
-                            Tuple.first boardCol1Offset
+                            0
+                            --Tuple.first boardCol1Offset
                         else if col == 2 then
-                            Tuple.first boardCol2Offset
+                            pileColumnOffset
+                            --Tuple.first boardCol2Offset
                         else if col == 3 then
-                            Tuple.first boardCol3Offset
+                            pileColumnOffset * 2
+                            --Tuple.first boardCol3Offset
                         else
                             0 
+
+                padding =  toFloat cardModel.width * 0.1 
             in
                 rect 
-                    [x (toString xoff)
-                    , width "90"
-                    , height "300"
+                    [x (toString (xoff - padding))
+                    , y (toString (20.0 - padding))
+                    , width (toString (toFloat cardModel.width + (2.0 * padding)))
+                    , height (toString (toFloat cardModel.height + (2.0 * padding)))
                     , stroke "blue"
                     , fill "red"
                     ] 
@@ -1288,6 +1293,8 @@ cardModel =
     }
 
 
+-- LAYOUT MODEL
+pileColumnOffset = 190
 
 -- Utils
 
@@ -1389,10 +1396,6 @@ remainders x =
 
 cardValue : Card.Card a -> Int
 cardValue (Card.Card _ value) = value
-            
-
-            
-
 
 
 
