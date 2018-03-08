@@ -771,7 +771,11 @@ showGuess model =
             [ 
               h1 [] 
                 [Html.text "Your favorite educator is ..." ]
-            , svg [] [cardElem guess]
+            , 
+            svg 
+                [width "800", height "800"]
+                --[] 
+                [cardElem guess]
             ]
 
 subscriptions : Model -> Sub Msg
