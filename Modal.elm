@@ -48,7 +48,7 @@ window (Modal copy isopen msg) =
             
     div 
         [class "w3-modal"
-        ,style [displayStyle,("min-height","800px")]
+        ,style [displayStyle,("_min-height","800px")]
         ]
         [
           contentDiv
@@ -59,7 +59,7 @@ selectPileModal isopen msg =
     let
         copyDiv = 
             div
-                []
+                [class "w3-xlarge"]
                 [
                  p [] [Html.text "PAY CLOSE ATTENTION !! "]
                 ,p [] [Html.text "I am going to place images into 3 piles."]

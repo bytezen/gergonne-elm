@@ -14,7 +14,7 @@ modal msg =
 
 next : msg -> Html msg
 next =
-    createButton "⇰"
+    createButton "↳" --"⇰"
 
 increment : msg -> Html msg
 increment =
@@ -89,7 +89,8 @@ w3SquareButton =
             --, "w3-circle"
             , "w3-xlarge"
             , "w3-ripple"
-            , "w3-black"
+            , "w3-pale-yellow"
+            , "w3-text-dark-gray"
             ]
 
         btnClasses = List.map 
@@ -107,7 +108,7 @@ w3Button =
             , "w3-circle"
             , "w3-xlarge"
             , "w3-ripple"
-            , "w3-black"
+            , "w3-blue"
             ]
 
         btnClasses = List.map 

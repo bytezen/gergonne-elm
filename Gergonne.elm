@@ -358,7 +358,7 @@ update msg model =
                         )
                         (List.range 0 (List.length model.styles))
                         model.styles
-                        deckStyle
+                        offscreenStyle --deckStyle
                         threePileStyle
 
 
@@ -552,7 +552,7 @@ showIntroScreen model =
         [] 
         [h1 
             [] 
-            [Html.text "Let's see if I can guess your card..."]
+            [Html.text "Can computers read minds ??? "]
         , Buttons.next (Continue ChooseNumber)
         --,Html.button
         --    [Html.Events.onClick (Continue ChooseNumber)]
@@ -676,25 +676,26 @@ showChooseCard model =
           Modal.window chooseCardModal
         , selectPileModal
         , svg
-            [width "800", height "600"]
+            [width boardWidth, height boardHeight]
+            --[width "800", height "600"]
             (svgElem model)
 
         , Buttons.next (ShowModal SelectPileModal) --(Continue <| SelectColumn )
         ]
 
 
-svgButton : String -> msg -> {b|wt:String, ht:String, xp: String, yp:String} -> Svg.Svg msg
-svgButton label msg {xp, yp, wt, ht} =
-    let
-        bg = rect [x xp, y yp, width wt, height ht, fill "black"] []
-        lbl = Svg.text_ [x xp, y "20", stroke "yellow"] [Svg.text label]
-        --Svg.text_ labelProps [Svg.text (toString value)]
+--svgButton : String -> msg -> {b|wt:String, ht:String, xp: String, yp:String} -> Svg.Svg msg
+--svgButton label msg {xp, yp, wt, ht} =
+--    let
+--        bg = rect [x xp, y yp, width wt, height ht, fill "black"] []
+--        lbl = Svg.text_ [x xp, y "20", stroke "yellow"] [Svg.text label]
+--        --Svg.text_ labelProps [Svg.text (toString value)]
             
-    in
+--    in
             
-    Svg.g 
-        [Svg.Events.onClick msg]
-        [bg,lbl]
+--    Svg.g 
+--        [Svg.Events.onClick msg]
+--        [bg,lbl]
 
 showBoardDealtScreen : Model -> Html Msg
 showBoardDealtScreen model = 
@@ -707,12 +708,12 @@ showBoardDealtScreen model =
                 [ version "1.1"
                 , x "0"
                 , y "0"
-                --, viewBox "0 0 400 400"
                 , Attr.style 
                     [
-                    --    ("padding", "50px 30px")
-                    ("height", "600px")
-                    ,("width", "800px")
+                    ("width", boardWidth)
+                    ,("height", boardHeight)
+                    --,("width", "800px")
+                    --,("width", "800px")
                     ]
                 ]    
                 [Svg.g [] [dealtCardView model]]    
@@ -730,8 +731,8 @@ showBoardDealtScreen model =
             []
             [
              --Modal.window modal
-             Html.h3 [] [Html.text <| toString model.isAnimating]
-            , svgElem
+             --Html.h3 [] [Html.text <| toString model.isAnimating]
+             svgElem
             ]
 
 
@@ -752,15 +753,15 @@ showGuess model =
         cardElem (Card.Card (Card.Rank url) value) = 
             Svg.g
                 --(Animation.render style)
-                [ transform "translate(200,100)" ]
+                [ transform "translate(250,30)" ]
                 [
                  rect cardModel.bgProps []
                 ,Svg.text_ cardModel.labelProps [Svg.text (toString value)]
                 ,Svg.image 
                     [
                      xlinkHref url
-                    ,width <| toString cardModel.width
-                    ,height <| toString cardModel.height
+                    ,width "320" --<| toString cardModel.width
+                    ,height "400" --<| toString cardModel.height
                     ] 
                     []
                 ]        
@@ -770,10 +771,10 @@ showGuess model =
         div []
             [ 
               h1 [] 
-                [Html.text "Your favorite educator is ..." ]
+                [Html.text "Your educator is ..." ]
             , 
             svg 
-                [width "800", height "800"]
+                [width boardWidth, height boardHeight]
                 --[] 
                 [cardElem guess]
             ]
@@ -828,7 +829,7 @@ offscreenStyle =
             Animation.translate (px x) (px y)
 
         translateOffscreen =
-            Animation.translate (px -100) (px -100)
+            Animation.translate (px 300) (px -500)
     in
         List.map 
             --(\i ->
@@ -876,7 +877,7 @@ faceUpAllStyle =
 
         colPadding = 1.15 * toFloat cardModel.width
 
-        rowPadding = 1.20 * toFloat cardModel.height
+        rowPadding = 1.10 * toFloat cardModel.height
 
         toPosition i =
             ( rem i colCount, i // colCount ) 
@@ -910,7 +911,7 @@ threePileStyle =
         List.map 
             (\(x,y) ->
                 [Animation.translate 
-                    (px (colOffset * x)) 
+                    (px (colOffset * x )) 
                     (px (rowOffset * 1))
                     --(px (rowOffset * y))
                 ]
@@ -1073,7 +1074,7 @@ dealtCardView {deck,styles,hovering,sortPlace} =
 
     in
         Svg.g 
-            []
+            [ transformAttr (200,100)]
             [        
               bg1
             , bg2
@@ -1261,9 +1262,9 @@ boardCol2Offset = (100,0)
 boardCol3Offset = (200,0)
 
 --cardDimensions 
-cardWIDTH = 80
-cardAR = 2.5 / 3.5
-cardHEIGHT = 100 --floor ( (toFloat cardWIDTH) / cardAR )
+cardWIDTH = 150 --80
+cardAR = 640 / 800.0 -- 2.5 / 3.5
+cardHEIGHT = 188 --100 --floor ( (toFloat cardWIDTH) / cardAR )
 
 cardModel : CardModel
 cardModel = 
@@ -1293,7 +1294,10 @@ cardModel =
 
 
 -- LAYOUT MODEL
-pileColumnOffset = 190
+pileColumnOffset = 225 --190
+
+boardWidth = toString 1300
+boardHeight = toString 800
 
 -- Utils
 
