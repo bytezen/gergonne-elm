@@ -1,4 +1,4 @@
-module Buttons exposing (modal, next,increment,decrement,reload,restart)
+module Buttons exposing (modal, next,increment,decrement,reload,restart, labelled, squareLabelled)
 
 import Html exposing (Html, button, span, text)
 import Html.Attributes exposing (classList)
@@ -31,8 +31,11 @@ restart: msg -> Html msg
 restart =
     createButton "↩"
 
+labelled : String -> msg -> Html msg
+labelled = createButton
 
-
+squareLabelled : String -> msg -> Html msg 
+squareLabelled = createSquareButton
 
 
 
@@ -45,7 +48,32 @@ createButton label msg =
         button 
         ([onClick msg] ++ [classList w3Button])
         [text label]
+
+
+createSquareButton : String -> msg -> Html msg
+createSquareButton label msg = 
+        button 
+        ([onClick msg] ++ [classList w3SquareButton])
+        [text label]    
             
+
+w3SquareButton : List (String, Bool)
+w3SquareButton =
+    let
+        classes = 
+            ["w3-button"
+            , "w3-large"
+            --, "w3-circle"
+            , "w3-xlarge"
+            , "w3-ripple"
+            , "w3-black"
+            ]
+
+        btnClasses = List.map 
+                        (\s -> (s,True))
+                        classes    
+    in
+        btnClasses            
 
 w3Button : List (String, Bool)
 w3Button =

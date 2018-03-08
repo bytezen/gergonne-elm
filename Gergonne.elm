@@ -507,28 +507,6 @@ showChooseNumber model =
                         (\s -> (s,True))
                         classes
 
-        --incrementBtn = 
-        --    Html.button
-        --        [
-        --        Attr.classList btnClasses
-        --        , Html.Events.onClick IncrementTarget
-        --        ]
-        --        [Html.text "⇧"]
-
-        --decrementBtn = 
-        --    Html.button
-        --        [
-        --        Attr.classList btnClasses
-        --        , Html.Events.onClick DecrementTarget
-        --        ]
-        --        [Html.text "⇩"]
-
-
-
-        btn = 
-            svgButton "testing" 
-                (Continue ChooseCard) 
-                {xp = "0", yp="0", wt = "100", ht = "100"}
 
         target = case model.target of
                     Nothing ->
@@ -538,30 +516,33 @@ showChooseNumber model =
     in
             
     div
-        ([Attr.style 
-            [("backgroundColor", "red")]
-         ]
-         ++
-         [Attr.align "center"
-         ]
-         ) 
-
+        --([Attr.style 
+        --    [("backgroundColor", "red")]
+        -- ]
+        -- ++
+        -- [Attr.align "center"
+        -- ]
+        -- ) 
+        []
         ([
-          Html.p [] [Html.text "Choose a Number"]
-        , Buttons.increment IncrementTarget
-        , Html.button
-            [Html.Events.onClick (Continue ChooseCard)]
-            [Html.text (toString target)]
-        , Buttons.decrement DecrementTarget
+          h1 [] [Html.text "Choose a Number"]
+        , div [class "w3-section"] [Buttons.increment IncrementTarget]
+        , div 
+            [class "w3-section" ] [Buttons.squareLabelled(toString target) (Continue ChooseCard)]
+            --[Html.button
+            --    [Html.Events.onClick (Continue ChooseCard)]
+            --    [Html.text (toString target)]
+            --]
+        , div [class "w3-section" ] [ Buttons.decrement DecrementTarget]
         ]
-        ++
-        [svg 
-            [x "0", y "0"] 
-            [ rect 
-                [x "0", width "100", height "100", fill "yellow", stroke "red"] []
-            , btn
-            ]
-        ]
+        --++
+        --[svg 
+        --    [x "0", y "0"] 
+        --    [ rect 
+        --        [x "0", width "100", height "100", fill "yellow", stroke "red"] []
+            
+        --    ]
+        --]
         )
 
 
